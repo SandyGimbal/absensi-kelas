@@ -1,0 +1,2859 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistem Absensi Kelas Berbasis Web - Prototipe Interaktif</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              200: '#c7d2fe',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+              800: '#3730a3',
+              900: '#312e81',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+    body {
+      font-family: 'Plus+Jakarta Sans', sans-serif;
+    }
+    .scrollbar-thin::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .scrollbar-thin::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    .scrollbar-thin::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 antialiased min-h-screen flex flex-col">
+
+  <!-- TOP PROTOTYPE CONTROLLER BAR -->
+  <header class="bg-slate-900 text-white px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 shadow-md sticky top-0 z-50 text-xs sm:text-sm">
+    <div class="flex items-center gap-2">
+      <div class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></div>
+      <span class="font-bold tracking-wide text-white">PROTOTIPE SISTEM ABSENSI KELAS</span>
+      <span class="hidden md:inline text-slate-400">| Sesuai Dokumen Desain & Wireframe</span>
+    </div>
+
+    <!-- Quick Role Switcher -->
+    <div class="flex items-center gap-2">
+      <span class="text-slate-400 text-xs hidden sm:inline">Peran Pengguna:</span>
+      <div class="inline-flex bg-slate-800 p-1 rounded-lg border border-slate-700">
+        <button onclick="switchRole('admin')" id="role-btn-admin" class="px-3 py-1 rounded-md text-xs font-semibold transition-all bg-brand-600 text-white shadow">
+          Admin
+        </button>
+        <button onclick="switchRole('dosen')" id="role-btn-dosen" class="px-3 py-1 rounded-md text-xs font-semibold transition-all text-slate-300 hover:text-white">
+          Dosen / Guru
+        </button>
+        <button onclick="switchRole('mahasiswa')" id="role-btn-mahasiswa" class="px-3 py-1 rounded-md text-xs font-semibold transition-all text-slate-300 hover:text-white">
+          Mahasiswa / Siswa
+        </button>
+      </div>
+
+      <!-- View Mode: Desktop / Mobile Frame -->
+      <div class="hidden sm:flex items-center bg-slate-800 p-1 rounded-lg border border-slate-700 ml-2">
+        <button onclick="setViewMode('desktop')" id="view-btn-desktop" class="px-2.5 py-1 rounded-md text-xs font-medium bg-slate-700 text-white flex items-center gap-1">
+          <i data-lucide="monitor" class="w-3.5 h-3.5"></i> Desktop
+        </button>
+        <button onclick="setViewMode('mobile')" id="view-btn-mobile" class="px-2.5 py-1 rounded-md text-xs font-medium text-slate-300 hover:text-white flex items-center gap-1">
+          <i data-lucide="smartphone" class="w-3.5 h-3.5"></i> Mobile
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN APP CONTAINER -->
+  <div id="app-viewport-wrapper" class="flex-1 flex justify-center bg-slate-100 transition-all duration-300 p-0">
+    
+    <!-- DESKTOP CONTAINER -->
+    <div id="desktop-container" class="w-full flex min-h-[calc(100vh-45px)] bg-slate-50">
+      
+      <!-- SIDEBAR -->
+      <aside class="w-64 bg-white border-r border-slate-200 flex flex-col justify-between shrink-0 shadow-sm">
+        <div>
+          <!-- Brand Header -->
+          <div class="p-5 border-b border-slate-100 flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-brand-600 text-white flex items-center justify-center shadow-md shadow-brand-200">
+              <i data-lucide="check-square" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <h1 class="font-bold text-slate-900 leading-tight text-base">Absensi Kelas</h1>
+              <p class="text-[11px] font-semibold text-brand-600 tracking-wider">PORTAL AKADEMIK</p>
+            </div>
+          </div>
+
+          <!-- Institution badge -->
+          <div class="p-4 mx-4 mt-4 bg-slate-50 border border-slate-200/80 rounded-xl">
+            <div class="text-xs font-bold text-slate-800">Universitas Nusantara</div>
+            <div class="text-[11px] text-slate-500 mt-0.5">Semester Ganjil 2026/2027</div>
+          </div>
+
+          <!-- Navigation Menus based on Role -->
+          <div class="px-4 py-4">
+            <div id="sidebar-role-label" class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2 px-3">
+              RUANG ADMIN
+            </div>
+
+            <!-- ADMIN NAV -->
+            <nav id="nav-admin" class="space-y-1">
+              <button onclick="navigateTo('admin-dashboard')" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 text-sm font-semibold rounded-xl text-brand-700 bg-brand-50 transition" data-target="admin-dashboard">
+                <i data-lucide="layout-grid" class="w-4 h-4"></i> Dashboard
+              </button>
+              <button onclick="navigateTo('admin-users')" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 text-sm font-semibold rounded-xl text-slate-600 hover:bg-slate-100 transition" data-target="admin-users">
+                <i data-lucide="users" class="w-4 h-4"></i> Manajemen Pengguna
+              </button>
+              <button onclick="navigateTo('admin-classes')" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 text-sm font-semibold rounded-xl text-slate-600 hover:bg-slate-100 transition" data-target="admin-classes">
+                <i data-lucide="book-open" class="w-4 h-4"></i> Kelas & Mata Pelajaran
+              </button>
+              <button onclick="navigateTo('admin-schedules')" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 text-sm font-semibold rounded-xl text-slate-600 hover:bg-slate-100 transition" data-target="admin-schedules">
+                <i data-lucide="calendar" class="w-4 h-4"></i> Pengaturan Jadwal
+              </button>
+            </nav>
+
+            <!-- DOSEN NAV -->
+            <nav id="nav-dosen" class="space-y-1 hidden">
+              <button onclick="navigateTo('dosen-dashboard')" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 text-sm font-semibold rounded-xl text-brand-700 bg-brand-50 transition" data-target="dosen-dashboard">
+                <i data-lucide="layout-grid" class="w-4 h-4"></i> Dashboard
+              </button>
+              <button onclick="navigateTo('dosen-create-session')" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 text-sm font-semibold rounded-xl text-slate-600 hover:bg-slate-100 transition" data-target="dosen-create-session">
+                <i data-lucide="plus-circle" class="w-4 h-4"></i> Buat Sesi Absensi
+              </button>
+              <button onclick="navigateTo('dosen-monitoring')" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 text-sm font-semibold rounded-xl text-slate-600 hover:bg-slate-100 transition" data-target="dosen-monitoring">
+                <i data-lucide="file-check-2" class="w-4 h-4"></i> Kehadiran & Rekap
+              </button>
+            </nav>
+
+            <!-- MAHASISWA NAV -->
+            <nav id="nav-mahasiswa" class="space-y-1 hidden">
+              <button onclick="navigateTo('mhs-dashboard')" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 text-sm font-semibold rounded-xl text-brand-700 bg-brand-50 transition" data-target="mhs-dashboard">
+                <i data-lucide="layout-grid" class="w-4 h-4"></i> Dashboard
+              </button>
+              <button onclick="navigateTo('mhs-attendance')" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 text-sm font-semibold rounded-xl text-slate-600 hover:bg-slate-100 transition" data-target="mhs-attendance">
+                <i data-lucide="scan-line" class="w-4 h-4"></i> Absensi
+              </button>
+              <button onclick="navigateTo('mhs-history')" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 text-sm font-semibold rounded-xl text-slate-600 hover:bg-slate-100 transition" data-target="mhs-history">
+                <i data-lucide="history" class="w-4 h-4"></i> Riwayat Kehadiran
+              </button>
+            </nav>
+          </div>
+        </div>
+
+        <!-- Sidebar Footer -->
+        <div class="p-4 border-t border-slate-100">
+          <button class="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-100">
+            <i data-lucide="help-circle" class="w-4 h-4 text-slate-400"></i> Pusat bantuan
+          </button>
+          <button class="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-slate-600 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition">
+            <i data-lucide="log-out" class="w-4 h-4 text-slate-400"></i> Keluar
+          </button>
+          <div class="mt-4 pt-3 border-t border-slate-100 text-[10px] text-slate-400 px-3 leading-relaxed">
+            Sistem Absensi Kelas Berbasis Web<br>Versi 1.0 • Tahun akademik 2026
+          </div>
+        </div>
+      </aside>
+
+      <!-- CONTENT AREA -->
+      <main class="flex-1 flex flex-col min-w-0 overflow-y-auto">
+        <!-- Top App Bar -->
+        <header class="bg-white border-b border-slate-200 px-8 py-3.5 flex items-center justify-between sticky top-0 z-30">
+          <!-- Breadcrumb -->
+          <div class="flex items-center gap-2 text-xs font-medium text-slate-500" id="breadcrumb-container">
+            <span id="breadcrumb-role" class="text-slate-600">Admin</span>
+            <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-slate-400"></i>
+            <span id="breadcrumb-page" class="text-brand-600 font-semibold">Dashboard</span>
+          </div>
+
+          <!-- User profile & notifications -->
+          <div class="flex items-center gap-4">
+            <button class="relative p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 transition" title="Notifikasi">
+              <i data-lucide="bell" class="w-4 h-4"></i>
+              <span class="absolute top-1 right-1 w-2 h-2 bg-brand-600 rounded-full ring-2 ring-white"></span>
+            </button>
+            <div class="h-6 w-[1px] bg-slate-200"></div>
+            <div class="flex items-center gap-3">
+              <div id="user-avatar" class="w-9 h-9 rounded-full bg-brand-100 text-brand-700 font-bold flex items-center justify-center text-xs ring-2 ring-brand-50">
+                RP
+              </div>
+              <div class="text-left hidden sm:block">
+                <div id="user-name" class="text-xs font-bold text-slate-800">Rina Puspita</div>
+                <div id="user-role-label" class="text-[11px] text-slate-500">Administrator</div>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <!-- PAGE SCREENS -->
+        <div class="p-8 max-w-7xl w-full mx-auto">
+          
+          <!-- ============================================== -->
+          <!-- SCREEN 1: ADMIN - DASHBOARD (PDF Hal 6)        -->
+          <!-- ============================================== -->
+          <div id="page-admin-dashboard" class="page-view space-y-6">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <span class="text-xs font-bold text-brand-600 uppercase tracking-wider">RINGKASAN INSTITUSI</span>
+                <h2 class="text-2xl font-bold text-slate-900 mt-1">Dashboard Admin</h2>
+                <p class="text-sm text-slate-500 mt-0.5">Selamat pagi, Rina. Berikut aktivitas akademik Jumat, 6 November 2026.</p>
+              </div>
+              <button onclick="navigateTo('admin-schedules')" class="inline-flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-sm transition">
+                <i data-lucide="calendar" class="w-4 h-4"></i> Atur jadwal
+              </button>
+            </div>
+
+            <!-- Stats 4 Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm relative overflow-hidden">
+                <div class="flex justify-between items-start">
+                  <span class="text-xs font-medium text-slate-500">Total pengguna</span>
+                  <div class="p-2 rounded-lg bg-indigo-50 text-brand-600"><i data-lucide="users" class="w-4 h-4"></i></div>
+                </div>
+                <div class="text-3xl font-extrabold text-slate-900 mt-2">128</div>
+                <div class="text-xs text-slate-500 mt-2">2 admin • 12 dosen • 114 mahasiswa</div>
+              </div>
+
+              <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm relative overflow-hidden">
+                <div class="flex justify-between items-start">
+                  <span class="text-xs font-medium text-slate-500">Kelas terdaftar</span>
+                  <div class="p-2 rounded-lg bg-purple-50 text-purple-600"><i data-lucide="building" class="w-4 h-4"></i></div>
+                </div>
+                <div class="text-3xl font-extrabold text-slate-900 mt-2">4</div>
+                <div class="text-xs text-slate-500 mt-2">Seluruh kelas semester aktif</div>
+              </div>
+
+              <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm relative overflow-hidden">
+                <div class="flex justify-between items-start">
+                  <span class="text-xs font-medium text-slate-500">Mata pelajaran</span>
+                  <div class="p-2 rounded-lg bg-blue-50 text-blue-600"><i data-lucide="book-marked" class="w-4 h-4"></i></div>
+                </div>
+                <div class="text-3xl font-extrabold text-slate-900 mt-2">8</div>
+                <div class="text-xs text-slate-500 mt-2">Dikelola oleh 12 dosen</div>
+              </div>
+
+              <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm relative overflow-hidden">
+                <div class="flex justify-between items-start">
+                  <span class="text-xs font-medium text-slate-500">Sesi hari ini</span>
+                  <div class="p-2 rounded-lg bg-violet-50 text-violet-600"><i data-lucide="clock" class="w-4 h-4"></i></div>
+                </div>
+                <div class="text-3xl font-extrabold text-slate-900 mt-2">12</div>
+                <div class="text-xs text-slate-500 mt-2"><span class="text-emerald-600 font-semibold">2 aktif</span> • 7 terjadwal • 3 selesai</div>
+              </div>
+            </div>
+
+            <!-- Middle Row: Chart & Quick Actions -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <!-- Attendance Weekly Bar Chart -->
+              <div class="lg:col-span-2 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <h3 class="font-bold text-slate-800 text-base">Kehadiran minggu ini</h3>
+                    <p class="text-xs text-slate-500">Persentase Hadir dari pertemuan yang sudah selesai</p>
+                  </div>
+                  <span class="text-xs text-slate-400">2-6 Nov 2026</span>
+                </div>
+                <div class="flex items-baseline gap-2 mt-4">
+                  <span class="text-3xl font-extrabold text-slate-900">90%</span>
+                  <span class="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">+2 poin dari minggu lalu</span>
+                </div>
+
+                <!-- Simple visual bars matching mockup -->
+                <div class="grid grid-cols-5 gap-4 mt-6 items-end h-36 pt-4 border-b border-slate-100">
+                  <div class="flex flex-col items-center gap-2">
+                    <span class="text-[11px] font-semibold text-slate-500">92%</span>
+                    <div class="w-full bg-brand-200 rounded-t-lg transition-all" style="height: 92px;"></div>
+                    <span class="text-xs text-slate-600 font-medium">Sen</span>
+                  </div>
+                  <div class="flex flex-col items-center gap-2">
+                    <span class="text-[11px] font-semibold text-slate-500">94%</span>
+                    <div class="w-full bg-brand-200 rounded-t-lg transition-all" style="height: 94px;"></div>
+                    <span class="text-xs text-slate-600 font-medium">Sel</span>
+                  </div>
+                  <div class="flex flex-col items-center gap-2">
+                    <span class="text-[11px] font-semibold text-slate-500">89%</span>
+                    <div class="w-full bg-brand-200 rounded-t-lg transition-all" style="height: 89px;"></div>
+                    <span class="text-xs text-slate-600 font-medium">Rab</span>
+                  </div>
+                  <div class="flex flex-col items-center gap-2">
+                    <span class="text-[11px] font-semibold text-slate-500">93%</span>
+                    <div class="w-full bg-brand-200 rounded-t-lg transition-all" style="height: 93px;"></div>
+                    <span class="text-xs text-slate-600 font-medium">Kam</span>
+                  </div>
+                  <div class="flex flex-col items-center gap-2">
+                    <span class="text-[11px] font-bold text-brand-700">90%</span>
+                    <div class="w-full bg-brand-600 rounded-t-lg shadow-sm" style="height: 90px;"></div>
+                    <span class="text-xs text-brand-700 font-bold">Jum</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Quick Actions -->
+              <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
+                <div>
+                  <h3 class="font-bold text-slate-800 text-base">Aksi cepat</h3>
+                  <p class="text-xs text-slate-500 mb-4">Kelola kebutuhan akademik harian</p>
+                  
+                  <div class="space-y-3">
+                    <button onclick="navigateTo('admin-users')" class="w-full flex items-center justify-between p-3.5 rounded-xl border border-slate-200/80 hover:border-brand-300 hover:bg-brand-50/50 transition group text-left">
+                      <div class="flex items-center gap-3">
+                        <div class="p-2 bg-indigo-50 text-brand-600 rounded-lg group-hover:bg-brand-600 group-hover:text-white transition"><i data-lucide="user-plus" class="w-4 h-4"></i></div>
+                        <div>
+                          <div class="text-xs font-bold text-slate-800">Tambah pengguna</div>
+                          <div class="text-[11px] text-slate-500">Buat akun dan tentukan hak akses</div>
+                        </div>
+                      </div>
+                      <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400 group-hover:text-brand-600 transition"></i>
+                    </button>
+
+                    <button onclick="navigateTo('admin-classes')" class="w-full flex items-center justify-between p-3.5 rounded-xl border border-slate-200/80 hover:border-brand-300 hover:bg-brand-50/50 transition group text-left">
+                      <div class="flex items-center gap-3">
+                        <div class="p-2 bg-purple-50 text-purple-600 rounded-lg group-hover:bg-brand-600 group-hover:text-white transition"><i data-lucide="layers" class="w-4 h-4"></i></div>
+                        <div>
+                          <div class="text-xs font-bold text-slate-800">Kelola kelas</div>
+                          <div class="text-[11px] text-slate-500">Atur kelas dan mata pelajaran</div>
+                        </div>
+                      </div>
+                      <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400 group-hover:text-brand-600 transition"></i>
+                    </button>
+
+                    <button onclick="navigateTo('admin-schedules')" class="w-full flex items-center justify-between p-3.5 rounded-xl border border-slate-200/80 hover:border-brand-300 hover:bg-brand-50/50 transition group text-left">
+                      <div class="flex items-center gap-3">
+                        <div class="p-2 bg-blue-50 text-blue-600 rounded-lg group-hover:bg-brand-600 group-hover:text-white transition"><i data-lucide="calendar-plus" class="w-4 h-4"></i></div>
+                        <div>
+                          <div class="text-xs font-bold text-slate-800">Pengaturan jadwal</div>
+                          <div class="text-[11px] text-slate-500">Susun jadwal belajar dan mengajar</div>
+                        </div>
+                      </div>
+                      <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400 group-hover:text-brand-600 transition"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Bottom Row: Recent Activity & Today Summary -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <!-- Recent Activity List -->
+              <div class="lg:col-span-2 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
+                <div class="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 class="font-bold text-slate-800 text-base">Aktivitas terbaru</h3>
+                    <p class="text-xs text-slate-500">Pembaruan dari seluruh ruang kerja</p>
+                  </div>
+                  <span class="text-xs text-slate-400">Hari ini</span>
+                </div>
+
+                <div class="divide-y divide-slate-100">
+                  <div class="py-3.5 flex items-center justify-between">
+                    <div>
+                      <div class="text-xs font-bold text-slate-800">Kehadiran berhasil dicatat</div>
+                      <div class="text-[11px] text-slate-500">Basis Data • TI-3A</div>
+                    </div>
+                    <div class="text-right">
+                      <div class="text-xs font-medium text-slate-700">Fajar Maulana</div>
+                      <div class="text-[11px] text-slate-400">09.19 WIB</div>
+                    </div>
+                  </div>
+                  <div class="py-3.5 flex items-center justify-between">
+                    <div>
+                      <div class="text-xs font-bold text-slate-800">Sesi absensi dibuka</div>
+                      <div class="text-[11px] text-slate-500">Basis Data • 09.00-10.40 WIB</div>
+                    </div>
+                    <div class="text-right">
+                      <div class="text-xs font-medium text-slate-700">Dr. Budi Santoso</div>
+                      <div class="text-[11px] text-slate-400">09.00 WIB</div>
+                    </div>
+                  </div>
+                  <div class="py-3.5 flex items-center justify-between">
+                    <div>
+                      <div class="text-xs font-bold text-slate-800">Jadwal perkuliahan diperbarui</div>
+                      <div class="text-[11px] text-slate-500">Pemrograman Web • TI-3A</div>
+                    </div>
+                    <div class="text-right">
+                      <div class="text-xs font-medium text-slate-700">Rina Puspita</div>
+                      <div class="text-[11px] text-slate-400">08.45 WIB</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Today's Summary Breakdown -->
+              <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
+                <div>
+                  <h3 class="font-bold text-slate-800 text-base">Ringkasan hari ini</h3>
+                  <p class="text-xs text-slate-500 mb-4">3 sesi selesai • 96 peserta</p>
+
+                  <div class="space-y-3">
+                    <div class="flex items-center justify-between p-3 rounded-xl bg-emerald-50 border border-emerald-100">
+                      <div class="flex items-center gap-2">
+                        <i data-lucide="check-circle" class="w-4 h-4 text-emerald-600"></i>
+                        <span class="text-xs font-bold text-emerald-800">Hadir</span>
+                      </div>
+                      <span class="text-xs font-extrabold text-emerald-700">86 mahasiswa</span>
+                    </div>
+
+                    <div class="flex items-center justify-between p-3 rounded-xl bg-amber-50 border border-amber-100">
+                      <div class="flex items-center gap-2">
+                        <i data-lucide="help-circle" class="w-4 h-4 text-amber-600"></i>
+                        <span class="text-xs font-bold text-amber-800">Izin</span>
+                      </div>
+                      <span class="text-xs font-extrabold text-amber-700">6 mahasiswa</span>
+                    </div>
+
+                    <div class="flex items-center justify-between p-3 rounded-xl bg-rose-50 border border-rose-100">
+                      <div class="flex items-center gap-2">
+                        <i data-lucide="x-circle" class="w-4 h-4 text-rose-600"></i>
+                        <span class="text-xs font-bold text-rose-800">Alpa</span>
+                      </div>
+                      <span class="text-xs font-extrabold text-rose-700">4 mahasiswa</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="text-[11px] text-slate-400 mt-4 leading-relaxed bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+                  Data sesi yang masih aktif belum masuk ke perhitungan Alpa.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ============================================== -->
+          <!-- SCREEN 2: ADMIN - MANAJEMEN PENGGUNA (PDF Hal 7) -->
+          <!-- ============================================== -->
+          <div id="page-admin-users" class="page-view hidden space-y-6">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <span class="text-xs font-bold text-brand-600 uppercase tracking-wider">ADMINISTRASI AKUN</span>
+                <h2 class="text-2xl font-bold text-slate-900 mt-1">Manajemen Pengguna</h2>
+                <p class="text-sm text-slate-500 mt-0.5">Kelola identitas, peran, dan akses pengguna dalam satu tempat.</p>
+              </div>
+              <button class="inline-flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-sm transition">
+                <i data-lucide="plus" class="w-4 h-4"></i> Tambah pengguna
+              </button>
+            </div>
+
+            <!-- Role Filter Pills -->
+            <div class="flex flex-wrap gap-2">
+              <button class="px-4 py-2 rounded-xl text-xs font-bold bg-brand-600 text-white shadow-sm">Semua pengguna 128</button>
+              <button class="px-4 py-2 rounded-xl text-xs font-medium bg-white text-slate-600 border border-slate-200 hover:bg-slate-50">Admin 2</button>
+              <button class="px-4 py-2 rounded-xl text-xs font-medium bg-white text-slate-600 border border-slate-200 hover:bg-slate-50">Dosen / Guru 12</button>
+              <button class="px-4 py-2 rounded-xl text-xs font-medium bg-white text-slate-600 border border-slate-200 hover:bg-slate-50">Mahasiswa / Siswa 114</button>
+            </div>
+
+            <!-- Main Layout: Table on left, Edit User Form on right -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <!-- Left: User List Table -->
+              <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden flex flex-col justify-between">
+                <div class="p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <h3 class="font-bold text-slate-800 text-base">Daftar pengguna</h3>
+                    <p class="text-xs text-slate-500">128 akun terdaftar • Semester Ganjil 2026/2027</p>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <div class="relative">
+                      <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+                      <input type="text" placeholder="Cari nama, NIM, atau surel..." class="pl-8 pr-3 py-1.5 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500 w-48 sm:w-56">
+                    </div>
+                    <select class="text-xs border border-slate-200 rounded-lg px-2.5 py-1.5 text-slate-600 bg-white">
+                      <option>Semua status</option>
+                      <option>Aktif</option>
+                      <option>Non-aktif</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Table -->
+                <div class="overflow-x-auto">
+                  <table class="w-full text-left text-xs">
+                    <thead class="bg-slate-50/70 text-slate-400 uppercase text-[10px] tracking-wider font-semibold border-b border-slate-100">
+                      <tr>
+                        <th class="px-5 py-3">NAMA / SUREL</th>
+                        <th class="px-4 py-3">PERAN</th>
+                        <th class="px-4 py-3">STATUS</th>
+                        <th class="px-4 py-3 text-right">AKSI</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 text-slate-700">
+                      <tr class="hover:bg-slate-50/50">
+                        <td class="px-5 py-3.5">
+                          <div class="font-bold text-slate-900">Rina Puspita</div>
+                          <div class="text-[11px] text-slate-400">rina.puspita@nusantara.ac.id</div>
+                        </td>
+                        <td class="px-4 py-3.5"><span class="font-medium text-slate-600">Admin</span></td>
+                        <td class="px-4 py-3.5"><span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Aktif</span></td>
+                        <td class="px-4 py-3.5 text-right font-medium">
+                          <button class="text-brand-600 hover:text-brand-800 mr-2">Ubah</button>
+                          <button class="text-rose-600 hover:text-rose-800">Hapus</button>
+                        </td>
+                      </tr>
+                      <tr class="hover:bg-slate-50/50">
+                        <td class="px-5 py-3.5">
+                          <div class="font-bold text-slate-900">Dr. Budi Santoso</div>
+                          <div class="text-[11px] text-slate-400">budi.santoso@nusantara.ac.id</div>
+                        </td>
+                        <td class="px-4 py-3.5"><span class="font-medium text-slate-600">Dosen / Guru</span></td>
+                        <td class="px-4 py-3.5"><span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Aktif</span></td>
+                        <td class="px-4 py-3.5 text-right font-medium">
+                          <button class="text-brand-600 hover:text-brand-800 mr-2">Ubah</button>
+                          <button class="text-rose-600 hover:text-rose-800">Hapus</button>
+                        </td>
+                      </tr>
+                      <tr class="hover:bg-slate-50/50">
+                        <td class="px-5 py-3.5">
+                          <div class="font-bold text-slate-900">Siti Rahma, M.Si.</div>
+                          <div class="text-[11px] text-slate-400">siti.rahma@nusantara.ac.id</div>
+                        </td>
+                        <td class="px-4 py-3.5"><span class="font-medium text-slate-600">Dosen / Guru</span></td>
+                        <td class="px-4 py-3.5"><span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Aktif</span></td>
+                        <td class="px-4 py-3.5 text-right font-medium">
+                          <button class="text-brand-600 hover:text-brand-800 mr-2">Ubah</button>
+                          <button class="text-rose-600 hover:text-rose-800">Hapus</button>
+                        </td>
+                      </tr>
+                      <tr class="hover:bg-slate-50/50 bg-brand-50/20">
+                        <td class="px-5 py-3.5">
+                          <div class="font-bold text-slate-900">Nadia Putri</div>
+                          <div class="text-[11px] text-slate-400">202431001 • TI-3A</div>
+                        </td>
+                        <td class="px-4 py-3.5"><span class="font-medium text-slate-600">Mahasiswa</span></td>
+                        <td class="px-4 py-3.5"><span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Aktif</span></td>
+                        <td class="px-4 py-3.5 text-right font-medium">
+                          <button class="text-brand-600 hover:text-brand-800 font-bold mr-2">Ubah</button>
+                          <button class="text-rose-600 hover:text-rose-800">Hapus</button>
+                        </td>
+                      </tr>
+                      <tr class="hover:bg-slate-50/50">
+                        <td class="px-5 py-3.5">
+                          <div class="font-bold text-slate-900">Fajar Maulana</div>
+                          <div class="text-[11px] text-slate-400">202431002 • TI-3A</div>
+                        </td>
+                        <td class="px-4 py-3.5"><span class="font-medium text-slate-600">Mahasiswa</span></td>
+                        <td class="px-4 py-3.5"><span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Aktif</span></td>
+                        <td class="px-4 py-3.5 text-right font-medium">
+                          <button class="text-brand-600 hover:text-brand-800 mr-2">Ubah</button>
+                          <button class="text-rose-600 hover:text-rose-800">Hapus</button>
+                        </td>
+                      </tr>
+                      <tr class="hover:bg-slate-50/50">
+                        <td class="px-5 py-3.5">
+                          <div class="font-bold text-slate-900">Rizky Ramadhan</div>
+                          <div class="text-[11px] text-slate-400">202431003 • TI-3A</div>
+                        </td>
+                        <td class="px-4 py-3.5"><span class="font-medium text-slate-600">Mahasiswa</span></td>
+                        <td class="px-4 py-3.5"><span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Aktif</span></td>
+                        <td class="px-4 py-3.5 text-right font-medium">
+                          <button class="text-brand-600 hover:text-brand-800 mr-2">Ubah</button>
+                          <button class="text-rose-600 hover:text-rose-800">Hapus</button>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <!-- Pagination & Info note -->
+                <div class="p-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
+                  <span>1-6 dari 128 pengguna</span>
+                  <div class="flex items-center gap-1">
+                    <button class="px-2.5 py-1 rounded border border-slate-200 hover:bg-slate-50">Sebelumnya</button>
+                    <button class="px-2.5 py-1 rounded bg-brand-600 text-white font-bold">1</button>
+                    <button class="px-2.5 py-1 rounded border border-slate-200 hover:bg-slate-50">2</button>
+                    <span class="px-1">...</span>
+                    <button class="px-2.5 py-1 rounded border border-slate-200 hover:bg-slate-50">22</button>
+                    <button class="px-2.5 py-1 rounded border border-slate-200 hover:bg-slate-50">Berikutnya</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Right: Form Ubah Akun (Nadia Putri) -->
+              <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
+                <div>
+                  <div class="flex items-center justify-between mb-4">
+                    <div>
+                      <h3 class="font-bold text-slate-900 text-base">Ubah akun</h3>
+                      <p class="text-xs text-slate-500">Contoh formulir • Nadia Putri</p>
+                    </div>
+                    <button class="text-xs text-slate-400 hover:text-slate-600">Batal</button>
+                  </div>
+
+                  <form class="space-y-4 text-xs" onsubmit="event.preventDefault();">
+                    <div>
+                      <label class="block font-medium text-slate-700 mb-1">Nama lengkap *</label>
+                      <input type="text" value="Nadia Putri" class="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500 font-medium">
+                    </div>
+
+                    <div>
+                      <label class="block font-medium text-slate-700 mb-1">Alamat surel institusi *</label>
+                      <input type="email" value="nadia.putri@nusantara.ac.id" class="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500 font-medium">
+                    </div>
+
+                    <div>
+                      <label class="block font-medium text-slate-700 mb-1">Peran pengguna *</label>
+                      <select class="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500 font-medium bg-white">
+                        <option>Mahasiswa / Siswa</option>
+                        <option>Dosen / Guru</option>
+                        <option>Admin</option>
+                      </select>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                      <div>
+                        <label class="block font-medium text-slate-700 mb-1">NIM / NIS *</label>
+                        <input type="text" value="202431001" class="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500 font-medium">
+                      </div>
+                      <div>
+                        <label class="block font-medium text-slate-700 mb-1">Kelas *</label>
+                        <select class="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500 font-medium bg-white">
+                          <option>TI-3A</option>
+                          <option>TI-3B</option>
+                          <option>SI-3A</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label class="block font-medium text-slate-700 mb-1">Status akun</label>
+                      <select class="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500 font-medium bg-white">
+                        <option>Aktif</option>
+                        <option>Non-aktif</option>
+                      </select>
+                      <span class="text-[10px] text-slate-400 mt-1 block">Akun aktif dapat masuk ke sistem.</span>
+                    </div>
+
+                    <div class="pt-2 border-t border-slate-100">
+                      <label class="block font-medium text-slate-700 mb-0.5">Kata sandi</label>
+                      <p class="text-[10px] text-slate-400 mb-2">Tidak diubah pada formulir ini. Tautan pengaturan ulang dikirim ke surel pengguna.</p>
+                      <button type="button" class="w-full py-1.5 px-3 border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 font-medium transition">
+                        Kirim tautan atur ulang
+                      </button>
+                    </div>
+
+                    <div class="pt-2">
+                      <button type="button" class="w-full py-2.5 px-4 bg-brand-600 hover:bg-brand-700 text-white rounded-xl font-bold shadow-sm transition flex items-center justify-center gap-2">
+                        <i data-lucide="check" class="w-4 h-4"></i> Simpan perubahan
+                      </button>
+                    </div>
+                  </form>
+                </div>
+                <div class="text-[10px] text-slate-400 mt-4 text-center">
+                  * Wajib diisi. Formulir yang sama digunakan saat menambah akun baru.
+                </div>
+              </div>
+            </div>
+
+            <!-- Permission note box -->
+            <div class="bg-indigo-50/60 border border-indigo-100 p-4 rounded-xl flex items-start gap-3">
+              <i data-lucide="info" class="w-5 h-5 text-brand-600 shrink-0 mt-0.5"></i>
+              <div class="text-xs text-slate-600">
+                <span class="font-bold text-brand-700">Hak akses mengikuti peran:</span> Admin mengelola data; dosen mengelola sesi kelasnya; mahasiswa mengisi kehadiran pribadi.
+              </div>
+            </div>
+          </div>
+
+          <!-- ============================================== -->
+          <!-- SCREEN 3: ADMIN - KELAS & MATKUL (PDF Hal 8)   -->
+          <!-- ============================================== -->
+          <div id="page-admin-classes" class="page-view hidden space-y-6">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <span class="text-xs font-bold text-brand-600 uppercase tracking-wider">DATA AKADEMIK</span>
+                <h2 class="text-2xl font-bold text-slate-900 mt-1">Kelas & Mata Pelajaran</h2>
+                <p class="text-sm text-slate-500 mt-0.5">Atur struktur kelas dan mata pelajaran untuk semester aktif.</p>
+              </div>
+              <div class="flex items-center gap-2 text-xs font-medium text-slate-600 bg-white border border-slate-200 px-3 py-2 rounded-xl shadow-sm">
+                <i data-lucide="calendar" class="w-4 h-4 text-brand-600"></i> Semester Ganjil 2026/2027
+              </div>
+            </div>
+
+            <!-- 3 Stat Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
+                <div>
+                  <div class="text-xs text-slate-500">Kelas terdaftar</div>
+                  <div class="text-2xl font-extrabold text-slate-900 mt-1">4</div>
+                  <div class="text-[11px] text-slate-400 mt-1">2 Teknik Informatika • 2 Sistem Informasi</div>
+                </div>
+                <div class="p-3 bg-indigo-50 text-brand-600 rounded-xl"><i data-lucide="school" class="w-5 h-5"></i></div>
+              </div>
+              <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
+                <div>
+                  <div class="text-xs text-slate-500">Mahasiswa terdaftar</div>
+                  <div class="text-2xl font-extrabold text-slate-900 mt-1">114</div>
+                  <div class="text-[11px] text-slate-400 mt-1">Tersebar pada 4 kelas aktif</div>
+                </div>
+                <div class="p-3 bg-purple-50 text-purple-600 rounded-xl"><i data-lucide="users" class="w-5 h-5"></i></div>
+              </div>
+              <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
+                <div>
+                  <div class="text-xs text-slate-500">Mata pelajaran</div>
+                  <div class="text-2xl font-extrabold text-slate-900 mt-1">8</div>
+                  <div class="text-[11px] text-slate-400 mt-1">Kurikulum semester ganjil</div>
+                </div>
+                <div class="p-3 bg-blue-50 text-blue-600 rounded-xl"><i data-lucide="book" class="w-5 h-5"></i></div>
+              </div>
+            </div>
+
+            <!-- Two Column Split: Daftar Kelas & Daftar Mata Pelajaran -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              
+              <!-- Column 1: Daftar Kelas + Form Tambah Kelas -->
+              <div class="space-y-6">
+                <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5">
+                  <div class="flex items-center justify-between mb-4">
+                    <div>
+                      <h3 class="font-bold text-slate-800 text-sm">Daftar kelas</h3>
+                      <p class="text-[11px] text-slate-500">4 kelas aktif</p>
+                    </div>
+                    <button class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-brand-600 text-white rounded-xl text-xs font-semibold shadow-sm hover:bg-brand-700">
+                      <i data-lucide="plus" class="w-3.5 h-3.5"></i> Tambah kelas
+                    </button>
+                  </div>
+
+                  <div class="relative mb-3">
+                    <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+                    <input type="text" placeholder="Cari kelas..." class="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-slate-200">
+                  </div>
+
+                  <table class="w-full text-xs text-left">
+                    <thead class="bg-slate-50 text-slate-400 text-[10px] uppercase font-semibold">
+                      <tr>
+                        <th class="py-2.5 px-3">KELAS</th>
+                        <th class="py-2.5 px-3">ANGGOTA</th>
+                        <th class="py-2.5 px-3">PROGRAM STUDI</th>
+                        <th class="py-2.5 px-3 text-right">AKSI</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                      <tr>
+                        <td class="py-3 px-3 font-bold text-slate-900">TI-3A</td>
+                        <td class="py-3 px-3 text-slate-600">32</td>
+                        <td class="py-3 px-3 text-slate-600">Teknik Informatika</td>
+                        <td class="py-3 px-3 text-right text-brand-600 font-medium">
+                          <button class="hover:underline mr-1.5">Ubah</button>
+                          <button class="text-rose-600 hover:underline">Hapus</button>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td class="py-3 px-3 font-bold text-slate-900">TI-3B</td>
+                        <td class="py-3 px-3 text-slate-600">30</td>
+                        <td class="py-3 px-3 text-slate-600">Teknik Informatika</td>
+                        <td class="py-3 px-3 text-right text-brand-600 font-medium">
+                          <button class="hover:underline mr-1.5">Ubah</button>
+                          <button class="text-rose-600 hover:underline">Hapus</button>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td class="py-3 px-3 font-bold text-slate-900">SI-3A</td>
+                        <td class="py-3 px-3 text-slate-600">28</td>
+                        <td class="py-3 px-3 text-slate-600">Sistem Informasi</td>
+                        <td class="py-3 px-3 text-right text-brand-600 font-medium">
+                          <button class="hover:underline mr-1.5">Ubah</button>
+                          <button class="text-rose-600 hover:underline">Hapus</button>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td class="py-3 px-3 font-bold text-slate-900">SI-3B</td>
+                        <td class="py-3 px-3 text-slate-600">24</td>
+                        <td class="py-3 px-3 text-slate-600">Sistem Informasi</td>
+                        <td class="py-3 px-3 text-right text-brand-600 font-medium">
+                          <button class="hover:underline mr-1.5">Ubah</button>
+                          <button class="text-rose-600 hover:underline">Hapus</button>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                  <div class="mt-3 text-[11px] text-slate-400">Menampilkan seluruh 4 kelas • Halaman 1 dari 1</div>
+                </div>
+
+                <!-- Form Tambah Kelas Quick -->
+                <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5">
+                  <h4 class="font-bold text-xs text-slate-900 mb-3">Tambah kelas</h4>
+                  <div class="grid grid-cols-2 gap-3 mb-3 text-xs">
+                    <div>
+                      <label class="block text-slate-600 font-medium mb-1">Nama kelas *</label>
+                      <input type="text" value="TI-3C" class="w-full px-3 py-1.5 border border-slate-200 rounded-lg">
+                    </div>
+                    <div>
+                      <label class="block text-slate-600 font-medium mb-1">Program studi *</label>
+                      <select class="w-full px-3 py-1.5 border border-slate-200 rounded-lg bg-white">
+                        <option>Teknik Informatika</option>
+                        <option>Sistem Informasi</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <span class="text-[10px] text-slate-400">Kelas baru mengikuti semester Ganjil 2026/2027.</span>
+                    <button class="px-3 py-1.5 bg-brand-600 text-white rounded-lg text-xs font-bold hover:bg-brand-700">Simpan kelas</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Column 2: Daftar Mata Pelajaran -->
+              <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5 flex flex-col justify-between">
+                <div>
+                  <div class="flex items-center justify-between mb-4">
+                    <div>
+                      <h3 class="font-bold text-slate-800 text-sm">Daftar mata pelajaran</h3>
+                      <p class="text-[11px] text-slate-500">8 mata pelajaran terdaftar</p>
+                    </div>
+                    <button class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-brand-600 text-white rounded-xl text-xs font-semibold shadow-sm hover:bg-brand-700">
+                      <i data-lucide="plus" class="w-3.5 h-3.5"></i> Tambah pelajaran
+                    </button>
+                  </div>
+
+                  <div class="relative mb-3">
+                    <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+                    <input type="text" placeholder="Cari nama atau kode..." class="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-slate-200">
+                  </div>
+
+                  <table class="w-full text-xs text-left">
+                    <thead class="bg-slate-50 text-slate-400 text-[10px] uppercase font-semibold">
+                      <tr>
+                        <th class="py-2.5 px-3">KODE</th>
+                        <th class="py-2.5 px-3">MATA PELAJARAN</th>
+                        <th class="py-2.5 px-3">PENGAMPU</th>
+                        <th class="py-2.5 px-3 text-right">AKSI</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                      <tr>
+                        <td class="py-3 px-3 text-slate-500 font-mono">IF201</td>
+                        <td class="py-3 px-3">
+                          <div class="font-bold text-slate-900">Basis Data</div>
+                          <div class="text-[10px] text-slate-400">3 SKS • TI-3A, TI-3B</div>
+                        </td>
+                        <td class="py-3 px-3 text-slate-700">Budi Santoso</td>
+                        <td class="py-3 px-3 text-right text-brand-600 font-medium">
+                          <button class="hover:underline mr-1">Ubah</button>
+                          <button class="text-rose-600 hover:underline">Hapus</button>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td class="py-3 px-3 text-slate-500 font-mono">IF203</td>
+                        <td class="py-3 px-3">
+                          <div class="font-bold text-slate-900">Pemrograman Web</div>
+                          <div class="text-[10px] text-slate-400">3 SKS • TI-3A, TI-3B</div>
+                        </td>
+                        <td class="py-3 px-3 text-slate-700">Budi Santoso</td>
+                        <td class="py-3 px-3 text-right text-brand-600 font-medium">
+                          <button class="hover:underline mr-1">Ubah</button>
+                          <button class="text-rose-600 hover:underline">Hapus</button>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td class="py-3 px-3 text-slate-500 font-mono">IF205</td>
+                        <td class="py-3 px-3">
+                          <div class="font-bold text-slate-900">Statistika</div>
+                          <div class="text-[10px] text-slate-400">2 SKS • TI-3A, SI-3A</div>
+                        </td>
+                        <td class="py-3 px-3 text-slate-700">Siti Rahma</td>
+                        <td class="py-3 px-3 text-right text-brand-600 font-medium">
+                          <button class="hover:underline mr-1">Ubah</button>
+                          <button class="text-rose-600 hover:underline">Hapus</button>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td class="py-3 px-3 text-slate-500 font-mono">IF207</td>
+                        <td class="py-3 px-3">
+                          <div class="font-bold text-slate-900">Jaringan Komputer</div>
+                          <div class="text-[10px] text-slate-400">3 SKS • TI-3A, TI-3B</div>
+                        </td>
+                        <td class="py-3 px-3 text-slate-700">Andi Pratama</td>
+                        <td class="py-3 px-3 text-right text-brand-600 font-medium">
+                          <button class="hover:underline mr-1">Ubah</button>
+                          <button class="text-rose-600 hover:underline">Hapus</button>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td class="py-3 px-3 text-slate-500 font-mono">SI201</td>
+                        <td class="py-3 px-3">
+                          <div class="font-bold text-slate-900">Analisis Sistem</div>
+                          <div class="text-[10px] text-slate-400">3 SKS • SI-3A, SI-3B</div>
+                        </td>
+                        <td class="py-3 px-3 text-slate-700">Dewi Lestari</td>
+                        <td class="py-3 px-3 text-right text-brand-600 font-medium">
+                          <button class="hover:underline mr-1">Ubah</button>
+                          <button class="text-rose-600 hover:underline">Hapus</button>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td class="py-3 px-3 text-slate-500 font-mono">SI203</td>
+                        <td class="py-3 px-3">
+                          <div class="font-bold text-slate-900">Manajemen Proyek</div>
+                          <div class="text-[10px] text-slate-400">2 SKS • SI-3A, SI-3B</div>
+                        </td>
+                        <td class="py-3 px-3 text-slate-700">Agus Wijaya</td>
+                        <td class="py-3 px-3 text-right text-brand-600 font-medium">
+                          <button class="hover:underline mr-1">Ubah</button>
+                          <button class="text-rose-600 hover:underline">Hapus</button>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+                  <span>1-6 dari 8 pelajaran</span>
+                  <div class="flex items-center gap-1">
+                    <button class="px-2 py-1 rounded bg-brand-600 text-white font-bold">1</button>
+                    <button class="px-2 py-1 rounded border border-slate-200 hover:bg-slate-50">2</button>
+                    <button class="px-2 py-1 rounded border border-slate-200 hover:bg-slate-50">Berikutnya</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Footer Alert -->
+            <div class="bg-indigo-50/60 border border-indigo-100 p-4 rounded-xl flex items-start gap-3">
+              <i data-lucide="info" class="w-5 h-5 text-brand-600 shrink-0 mt-0.5"></i>
+              <div class="text-xs text-slate-600">
+                <span class="font-bold text-brand-700">Data terhubung ke jadwal dan sesi absensi:</span> Perubahan nama berlaku pada jadwal terkait. Data yang sudah memiliki riwayat kehadiran tidak dapat dihapus sebelum keterkaitannya ditinjau.
+              </div>
+            </div>
+          </div>
+
+          <!-- ============================================== -->
+          <!-- SCREEN 4: ADMIN - PENGATURAN JADWAL (PDF Hal 9) -->
+          <!-- ============================================== -->
+          <div id="page-admin-schedules" class="page-view hidden space-y-6">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <span class="text-xs font-bold text-brand-600 uppercase tracking-wider">JADWAL AKADEMIK</span>
+                <h2 class="text-2xl font-bold text-slate-900 mt-1">Pengaturan Jadwal</h2>
+                <p class="text-sm text-slate-500 mt-0.5">Susun waktu belajar tanpa benturan kelas, ruang, dan dosen.</p>
+              </div>
+              <button class="inline-flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-sm transition">
+                <i data-lucide="plus" class="w-4 h-4"></i> Tambah jadwal
+              </button>
+            </div>
+
+            <div class="bg-indigo-50/60 border border-indigo-100 p-4 rounded-xl flex items-center gap-3">
+              <i data-lucide="info" class="w-5 h-5 text-brand-600 shrink-0"></i>
+              <div class="text-xs text-slate-600">
+                <span class="font-bold text-brand-700">Semester Ganjil 2026/2027:</span> Jadwal berulang setiap minggu. Tanggal acuan tampilan: Jumat, 6 November 2026. Seluruh waktu menggunakan WIB.
+              </div>
+            </div>
+
+            <!-- Grid: Schedule Table on left, Tambah Jadwal form on right -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              
+              <!-- Left: Jadwal Perkuliahan -->
+              <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5 flex flex-col justify-between">
+                <div>
+                  <div class="flex items-center justify-between mb-4">
+                    <div>
+                      <h3 class="font-bold text-slate-800 text-sm">Jadwal perkuliahan</h3>
+                      <p class="text-[11px] text-slate-500">Jumat, 6 November 2026</p>
+                    </div>
+                    <span class="text-xs text-slate-400">12 jadwal hari ini</span>
+                  </div>
+
+                  <div class="flex items-center gap-2 mb-4">
+                    <div class="relative flex-1">
+                      <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+                      <input type="text" placeholder="Cari mata pelajaran..." class="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-slate-200">
+                    </div>
+                    <select class="text-xs border border-slate-200 rounded-lg px-2.5 py-1.5 bg-white text-slate-600">
+                      <option>Jumat</option>
+                      <option>Senin</option>
+                      <option>Selasa</option>
+                    </select>
+                    <select class="text-xs border border-slate-200 rounded-lg px-2.5 py-1.5 bg-white text-slate-600">
+                      <option>Semua kelas</option>
+                      <option>TI-3A</option>
+                      <option>TI-3B</option>
+                    </select>
+                  </div>
+
+                  <table class="w-full text-xs text-left">
+                    <thead class="bg-slate-50 text-slate-400 text-[10px] uppercase font-semibold">
+                      <tr>
+                        <th class="py-2 px-3">WAKTU</th>
+                        <th class="py-2 px-3">KELAS</th>
+                        <th class="py-2 px-3">MATA PELAJARAN / DOSEN</th>
+                        <th class="py-2 px-3">RUANG</th>
+                        <th class="py-2 px-3 text-right">AKSI</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                      <tr>
+                        <td class="py-3 px-3 font-medium text-slate-700">07.00-08.40</td>
+                        <td class="py-3 px-3 font-bold text-slate-900">SI-3A</td>
+                        <td class="py-3 px-3">
+                          <div class="font-bold text-slate-800">Analisis Sistem</div>
+                          <div class="text-[10px] text-slate-400">Dewi Lestari, M.Kom.</div>
+                        </td>
+                        <td class="py-3 px-3 text-slate-600">C.101</td>
+                        <td class="py-3 px-3 text-right text-brand-600 font-medium">
+                          <button class="hover:underline mr-1">Ubah</button>
+                          <button class="text-rose-600 hover:underline">Hapus</button>
+                        </td>
+                      </tr>
+                      <tr class="bg-brand-50/20">
+                        <td class="py-3 px-3 font-medium text-slate-700">09.00-10.40</td>
+                        <td class="py-3 px-3 font-bold text-slate-900">TI-3A</td>
+                        <td class="py-3 px-3">
+                          <div class="font-bold text-slate-800">Basis Data</div>
+                          <div class="text-[10px] text-slate-400">Dr. Budi Santoso</div>
+                        </td>
+                        <td class="py-3 px-3 text-slate-600">B.204</td>
+                        <td class="py-3 px-3 text-right text-brand-600 font-medium">
+                          <button class="hover:underline mr-1">Ubah</button>
+                          <button class="text-rose-600 hover:underline">Hapus</button>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td class="py-3 px-3 font-medium text-slate-700">09.00-10.40</td>
+                        <td class="py-3 px-3 font-bold text-slate-900">SI-3B</td>
+                        <td class="py-3 px-3">
+                          <div class="font-bold text-slate-800">Manajemen Proyek</div>
+                          <div class="text-[10px] text-slate-400">Agus Wijaya, M.M.</div>
+                        </td>
+                        <td class="py-3 px-3 text-slate-600">C.102</td>
+                        <td class="py-3 px-3 text-right text-brand-600 font-medium">
+                          <button class="hover:underline mr-1">Ubah</button>
+                          <button class="text-rose-600 hover:underline">Hapus</button>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td class="py-3 px-3 font-medium text-slate-700">13.00-14.40</td>
+                        <td class="py-3 px-3 font-bold text-slate-900">TI-3A</td>
+                        <td class="py-3 px-3">
+                          <div class="font-bold text-slate-800">Pemrograman Web</div>
+                          <div class="text-[10px] text-slate-400">Dr. Budi Santoso</div>
+                        </td>
+                        <td class="py-3 px-3 text-slate-600">Lab. 2</td>
+                        <td class="py-3 px-3 text-right text-brand-600 font-medium">
+                          <button class="hover:underline mr-1">Ubah</button>
+                          <button class="text-rose-600 hover:underline">Hapus</button>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td class="py-3 px-3 font-medium text-slate-700">15.00-16.40</td>
+                        <td class="py-3 px-3 font-bold text-slate-900">TI-3A</td>
+                        <td class="py-3 px-3">
+                          <div class="font-bold text-slate-800">Statistika</div>
+                          <div class="text-[10px] text-slate-400">Siti Rahma, M.Si.</div>
+                        </td>
+                        <td class="py-3 px-3 text-slate-600">B.201</td>
+                        <td class="py-3 px-3 text-right text-brand-600 font-medium">
+                          <button class="hover:underline mr-1">Ubah</button>
+                          <button class="text-rose-600 hover:underline">Hapus</button>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td class="py-3 px-3 font-medium text-slate-700">15.00-16.40</td>
+                        <td class="py-3 px-3 font-bold text-slate-900">TI-3B</td>
+                        <td class="py-3 px-3">
+                          <div class="font-bold text-slate-800">Basis Data</div>
+                          <div class="text-[10px] text-slate-400">Dr. Budi Santoso</div>
+                        </td>
+                        <td class="py-3 px-3 text-slate-600">B.204</td>
+                        <td class="py-3 px-3 text-right text-brand-600 font-medium">
+                          <button class="hover:underline mr-1">Ubah</button>
+                          <button class="text-rose-600 hover:underline">Hapus</button>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+                  <span>1-6 dari 12 jadwal</span>
+                  <div class="flex items-center gap-1">
+                    <button class="px-2.5 py-1 rounded border border-slate-200">Sebelumnya</button>
+                    <button class="px-2.5 py-1 rounded bg-brand-600 text-white font-bold">1</button>
+                    <button class="px-2.5 py-1 rounded border border-slate-200">2</button>
+                    <button class="px-2.5 py-1 rounded border border-slate-200">Berikutnya</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Right: Form Tambah Jadwal -->
+              <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 flex flex-col justify-between">
+                <div>
+                  <h3 class="font-bold text-slate-900 text-base mb-1">Tambah jadwal</h3>
+                  <p class="text-xs text-slate-500 mb-4">Lengkapi rincian jadwal mingguan</p>
+
+                  <div class="space-y-3.5 text-xs">
+                    <div>
+                      <label class="block font-medium text-slate-700 mb-1">Hari perkuliahan *</label>
+                      <select class="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white">
+                        <option>Senin</option>
+                        <option>Selasa</option>
+                        <option>Rabu</option>
+                        <option>Kamis</option>
+                        <option>Jumat</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label class="block font-medium text-slate-700 mb-1">Kelas *</label>
+                      <select class="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white">
+                        <option>TI-3B</option>
+                        <option>TI-3A</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label class="block font-medium text-slate-700 mb-1">Mata pelajaran *</label>
+                      <select class="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white">
+                        <option>Jaringan Komputer (IF207)</option>
+                        <option>Basis Data (IF201)</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label class="block font-medium text-slate-700 mb-1">Dosen / Guru *</label>
+                      <select class="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white">
+                        <option>Andi Pratama, M.Kom.</option>
+                        <option>Dr. Budi Santoso</option>
+                      </select>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                      <div>
+                        <label class="block font-medium text-slate-700 mb-1">Jam mulai *</label>
+                        <input type="text" value="09.00" class="w-full px-3 py-2 rounded-xl border border-slate-200">
+                      </div>
+                      <div>
+                        <label class="block font-medium text-slate-700 mb-1">Jam selesai *</label>
+                        <input type="text" value="10.40" class="w-full px-3 py-2 rounded-xl border border-slate-200">
+                      </div>
+                    </div>
+
+                    <div>
+                      <label class="block font-medium text-slate-700 mb-1">Ruang *</label>
+                      <input type="text" value="Lab. Jaringan" class="w-full px-3 py-2 rounded-xl border border-slate-200">
+                    </div>
+
+                    <!-- Conflict Detection Status -->
+                    <div class="p-3 rounded-xl bg-emerald-50 border border-emerald-200 flex items-start gap-2.5">
+                      <i data-lucide="check-circle" class="w-4 h-4 text-emerald-600 shrink-0 mt-0.5"></i>
+                      <div class="text-[11px] text-emerald-800">
+                        <span class="font-bold">Tidak ada benturan:</span> Kelas, dosen, dan ruang tersedia pada waktu yang dipilih.
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="pt-4 flex items-center gap-3">
+                  <button class="flex-1 py-2.5 px-4 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold shadow-sm transition">
+                    ✓ Simpan jadwal
+                  </button>
+                  <button class="py-2.5 px-4 border border-slate-200 rounded-xl text-xs text-slate-600 hover:bg-slate-50 font-medium">
+                    Batal
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ============================================== -->
+          <!-- SCREEN 5: DOSEN - DASHBOARD (PDF Hal 10)       -->
+          <!-- ============================================== -->
+          <div id="page-dosen-dashboard" class="page-view hidden space-y-6">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <span class="text-xs font-bold text-brand-600 uppercase tracking-wider">RUANG DOSEN / GURU</span>
+                <h2 class="text-2xl font-bold text-slate-900 mt-1">Selamat pagi, Pak Budi</h2>
+                <p class="text-sm text-slate-500 mt-0.5">Jumat, 6 November 2026 • Siap mendampingi perkuliahan hari ini?</p>
+              </div>
+              <button onclick="navigateTo('dosen-create-session')" class="inline-flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-sm transition">
+                <i data-lucide="plus" class="w-4 h-4"></i> Buat sesi absensi
+              </button>
+            </div>
+
+            <!-- Stats 3 Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
+                <div>
+                  <span class="text-xs font-medium text-slate-500">Jadwal mengajar hari ini</span>
+                  <div class="text-3xl font-extrabold text-slate-900 mt-2">3</div>
+                  <div class="text-xs text-slate-500 mt-1">2 kelas • 2 mata pelajaran</div>
+                </div>
+                <div class="p-3 rounded-xl bg-purple-50 text-brand-600"><i data-lucide="calendar" class="w-5 h-5"></i></div>
+              </div>
+
+              <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
+                <div>
+                  <span class="text-xs font-medium text-slate-500">Sesi sedang aktif</span>
+                  <div class="text-3xl font-extrabold text-slate-900 mt-2">1</div>
+                  <div class="text-xs text-emerald-600 font-semibold mt-1">Basis Data • TI-3A</div>
+                </div>
+                <div class="p-3 rounded-xl bg-emerald-50 text-emerald-600"><i data-lucide="radio" class="w-5 h-5"></i></div>
+              </div>
+
+              <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
+                <div>
+                  <span class="text-xs font-medium text-slate-500">Kehadiran bulan ini</span>
+                  <div class="text-3xl font-extrabold text-slate-900 mt-2">91,8%</div>
+                  <div class="text-xs text-slate-500 mt-1">Dari seluruh sesi selesai kelas Anda</div>
+                </div>
+                <div class="p-3 rounded-xl bg-blue-50 text-blue-600"><i data-lucide="trending-up" class="w-5 h-5"></i></div>
+              </div>
+            </div>
+
+            <!-- Active Session Banner -->
+            <div class="bg-gradient-to-r from-brand-50 to-indigo-50/50 border border-brand-200/80 rounded-2xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-2xl bg-brand-600 text-white flex items-center justify-center shrink-0 shadow-md shadow-brand-200">
+                  <i data-lucide="radio" class="w-6 h-6 animate-pulse"></i>
+                </div>
+                <div>
+                  <div class="flex items-center gap-2">
+                    <h3 class="font-bold text-slate-900 text-base">Basis Data • TI-3A</h3>
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700">
+                      <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Aktif
+                    </span>
+                  </div>
+                  <p class="text-xs text-slate-600 mt-0.5">09.00–10.40 WIB • <span class="font-bold text-slate-800">27 Hadir</span>, 1 Izin, 4 Belum mengisi dari 32 mahasiswa</p>
+                </div>
+              </div>
+              <button onclick="navigateTo('dosen-monitoring')" class="px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold shadow-md shadow-brand-200 transition flex items-center gap-2 shrink-0">
+                Pantau kehadiran <i data-lucide="arrow-right" class="w-4 h-4"></i>
+              </button>
+            </div>
+
+            <!-- Two Columns: Teaching Schedule & Class Attendance Summary -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6">
+                <div class="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 class="font-bold text-slate-800 text-base">Jadwal mengajar hari ini</h3>
+                    <p class="text-xs text-slate-500">Jumat, 6 November • Seluruh waktu dalam WIB</p>
+                  </div>
+                  <span class="text-xs text-slate-400">3 perkuliahan</span>
+                </div>
+
+                <div class="space-y-3">
+                  <!-- Class 1: Active -->
+                  <div class="p-4 rounded-xl border border-emerald-200 bg-emerald-50/20 flex items-center justify-between">
+                    <div class="flex items-center gap-4">
+                      <div class="text-left">
+                        <div class="text-sm font-extrabold text-slate-900">09.00</div>
+                        <div class="text-[10px] text-slate-400">s.d. 10.40 WIB</div>
+                      </div>
+                      <div class="h-8 w-[1px] bg-slate-200"></div>
+                      <div>
+                        <div class="text-xs font-bold text-slate-900">Basis Data</div>
+                        <div class="text-[11px] text-slate-500">TI-3A • Ruang B.204 • Dr. Budi Santoso</div>
+                      </div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                      <span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-100 text-emerald-700">Aktif</span>
+                      <button onclick="navigateTo('dosen-monitoring')" class="text-xs font-bold text-brand-600 hover:text-brand-800">Pantau</button>
+                    </div>
+                  </div>
+
+                  <!-- Class 2: Scheduled -->
+                  <div class="p-4 rounded-xl border border-slate-200 hover:border-slate-300 flex items-center justify-between">
+                    <div class="flex items-center gap-4">
+                      <div class="text-left">
+                        <div class="text-sm font-extrabold text-slate-900">13.00</div>
+                        <div class="text-[10px] text-slate-400">s.d. 14.40 WIB</div>
+                      </div>
+                      <div class="h-8 w-[1px] bg-slate-200"></div>
+                      <div>
+                        <div class="text-xs font-bold text-slate-900">Pemrograman Web</div>
+                        <div class="text-[11px] text-slate-500">TI-3A • Lab. 2 • Dr. Budi Santoso</div>
+                      </div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                      <span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-indigo-50 text-brand-700">Terjadwal</span>
+                      <button onclick="navigateTo('dosen-create-session')" class="text-xs font-bold text-slate-700 hover:text-brand-600">Buat sesi</button>
+                    </div>
+                  </div>
+
+                  <!-- Class 3: Scheduled -->
+                  <div class="p-4 rounded-xl border border-slate-200 hover:border-slate-300 flex items-center justify-between">
+                    <div class="flex items-center gap-4">
+                      <div class="text-left">
+                        <div class="text-sm font-extrabold text-slate-900">15.00</div>
+                        <div class="text-[10px] text-slate-400">s.d. 16.40 WIB</div>
+                      </div>
+                      <div class="h-8 w-[1px] bg-slate-200"></div>
+                      <div>
+                        <div class="text-xs font-bold text-slate-900">Basis Data</div>
+                        <div class="text-[11px] text-slate-500">TI-3B • Ruang B.204 • 30 mahasiswa</div>
+                      </div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                      <span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-indigo-50 text-brand-700">Terjadwal</span>
+                      <button onclick="navigateTo('dosen-create-session')" class="text-xs font-bold text-slate-700 hover:text-brand-600">Buat sesi</button>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="mt-4 text-[11px] text-slate-400">
+                  Sesi terjadwal akan menerima kehadiran setelah waktu mulai dan sesi dibuka.
+                </div>
+              </div>
+
+              <!-- Right: Kehadiran per Kelas & Pintasan Rekap -->
+              <div class="space-y-6">
+                <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6">
+                  <div class="flex items-center justify-between mb-4">
+                    <h3 class="font-bold text-slate-800 text-sm">Kehadiran per kelas</h3>
+                    <span class="text-[11px] text-slate-400">November • selesai</span>
+                  </div>
+                  <div class="space-y-3">
+                    <div>
+                      <div class="flex justify-between text-xs font-semibold mb-1">
+                        <span class="text-slate-800">TI-3A</span>
+                        <span class="text-brand-700">92,4%</span>
+                      </div>
+                      <div class="w-full bg-slate-100 rounded-full h-2">
+                        <div class="bg-brand-600 h-2 rounded-full" style="width: 92.4%"></div>
+                      </div>
+                    </div>
+                    <div>
+                      <div class="flex justify-between text-xs font-semibold mb-1">
+                        <span class="text-slate-800">TI-3B</span>
+                        <span class="text-brand-700">91,2%</span>
+                      </div>
+                      <div class="w-full bg-slate-100 rounded-full h-2">
+                        <div class="bg-brand-600 h-2 rounded-full" style="width: 91.2%"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6">
+                  <h3 class="font-bold text-slate-800 text-sm mb-1">Rekap siap ditinjau</h3>
+                  <p class="text-xs text-slate-500 mb-4">Unduh laporan kehadiran berdasarkan periode dan kelas yang Anda ampu.</p>
+                  <button onclick="navigateTo('dosen-monitoring')" class="w-full py-2.5 px-4 rounded-xl border border-slate-200 hover:bg-slate-50 text-xs font-bold text-slate-700 flex items-center justify-center gap-2">
+                    <i data-lucide="file-spreadsheet" class="w-4 h-4 text-brand-600"></i> Buka rekap
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ============================================== -->
+          <!-- SCREEN 6: DOSEN - BUAT SESI ABSENSI (PDF Hal 11) -->
+          <!-- ============================================== -->
+          <div id="page-dosen-create-session" class="page-view hidden space-y-6">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <span class="text-xs font-bold text-brand-600 uppercase tracking-wider">PENGELOLAAN SESI</span>
+                <h2 class="text-2xl font-bold text-slate-900 mt-1">Buat Sesi Absensi</h2>
+                <p class="text-sm text-slate-500 mt-0.5">Siapkan sesi kehadiran untuk kelas yang Anda ampu.</p>
+              </div>
+              <button onclick="navigateTo('dosen-dashboard')" class="inline-flex items-center gap-2 text-xs font-semibold text-slate-600 hover:text-slate-900 bg-white border border-slate-200 px-4 py-2 rounded-xl shadow-sm">
+                <i data-lucide="arrow-left" class="w-4 h-4"></i> Kembali ke dashboard
+              </button>
+            </div>
+
+            <!-- Steps bar -->
+            <div class="bg-white p-3.5 rounded-xl border border-slate-200/80 flex items-center gap-4 text-xs font-medium text-slate-500 overflow-x-auto">
+              <span class="text-brand-600 font-bold flex items-center gap-1.5 shrink-0"><i data-lucide="check-circle" class="w-4 h-4"></i> Lengkapi rincian sesi</span>
+              <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-slate-300 shrink-0"></i>
+              <span class="shrink-0">Periksa ringkasan</span>
+              <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-slate-300 shrink-0"></i>
+              <span class="shrink-0">Buat dan bagikan ke kelas</span>
+            </div>
+
+            <!-- Form & Live Preview Split -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              
+              <!-- Left: Form Input -->
+              <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 space-y-5">
+                <div>
+                  <h3 class="font-bold text-slate-900 text-base">Rincian sesi</h3>
+                  <p class="text-xs text-slate-500">Kolom bertanda * wajib diisi</p>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                  <div>
+                    <label class="block font-medium text-slate-700 mb-1">Kelas *</label>
+                    <select id="input-session-class" class="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white font-medium" onchange="updateSessionPreview()">
+                      <option value="TI-3A">TI-3A</option>
+                      <option value="TI-3B">TI-3B</option>
+                    </select>
+                    <span class="text-[10px] text-slate-400 mt-1 block">32 mahasiswa terdaftar</span>
+                  </div>
+
+                  <div>
+                    <label class="block font-medium text-slate-700 mb-1">Mata pelajaran *</label>
+                    <select id="input-session-subject" class="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white font-medium" onchange="updateSessionPreview()">
+                      <option value="Pemrograman Web (IF203)">Pemrograman Web (IF203)</option>
+                      <option value="Basis Data (IF201)">Basis Data (IF201)</option>
+                    </select>
+                    <span class="text-[10px] text-slate-400 mt-1 block">Hanya mata pelajaran yang Anda ampu</span>
+                  </div>
+
+                  <div>
+                    <label class="block font-medium text-slate-700 mb-1">Tanggal sesi *</label>
+                    <select class="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white font-medium">
+                      <option>6 November 2026</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label class="block font-medium text-slate-700 mb-1">Pertemuan *</label>
+                    <select id="input-session-meet" class="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white font-medium" onchange="updateSessionPreview()">
+                      <option value="Pertemuan 8">Pertemuan 8</option>
+                      <option value="Pertemuan 9">Pertemuan 9</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label class="block font-medium text-slate-700 mb-1">Waktu mulai (WIB) *</label>
+                    <input type="text" value="13.00" class="w-full px-3 py-2 rounded-xl border border-slate-200 font-medium">
+                    <span class="text-[10px] text-slate-400 mt-1 block">Mengikuti jadwal kelas yang dipilih</span>
+                  </div>
+
+                  <div>
+                    <label class="block font-medium text-slate-700 mb-1">Waktu selesai (WIB) *</label>
+                    <input type="text" value="14.40" class="w-full px-3 py-2 rounded-xl border border-slate-200 font-medium">
+                    <span class="text-[10px] text-slate-400 mt-1 block">Harus lebih akhir dari waktu mulai</span>
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block text-xs font-medium text-slate-700 mb-1">Topik pertemuan</label>
+                  <input type="text" value="Formulir dan validasi masukan pada web" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium">
+                  <span class="text-[10px] text-slate-400 mt-1 block">Opsional. Ditampilkan pada rincian sesi mahasiswa.</span>
+                </div>
+
+                <!-- Info note -->
+                <div class="p-3 rounded-xl bg-indigo-50/60 border border-indigo-100 flex items-start gap-2.5">
+                  <i data-lucide="info" class="w-4 h-4 text-brand-600 shrink-0 mt-0.5"></i>
+                  <div class="text-[11px] text-slate-600">
+                    <span class="font-bold text-brand-700">Sesi dibuka sesuai waktu mulai:</span> Setelah dibuat, sesi berstatus Terjadwal. Mahasiswa baru dapat mengirim kehadiran pukul 13.00–14.40 WIB.
+                  </div>
+                </div>
+
+                <div class="pt-4 flex items-center justify-between border-t border-slate-100">
+                  <span class="text-[11px] text-slate-400">Periksa kembali rincian sebelum membuat sesi.</span>
+                  <div class="flex items-center gap-2">
+                    <button onclick="navigateTo('dosen-dashboard')" class="px-4 py-2 border border-slate-200 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-50">Batal</button>
+                    <button onclick="alert('Sesi berhasil dibuat!'); navigateTo('dosen-dashboard');" class="px-5 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold shadow-sm transition flex items-center gap-1.5">
+                      <i data-lucide="plus" class="w-4 h-4"></i> Buat sesi absensi
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Right: Live Preview Ringkasan Sesi -->
+              <div class="space-y-4">
+                <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 space-y-4">
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <h4 class="font-bold text-slate-800 text-sm">Ringkasan sesi</h4>
+                      <p class="text-[11px] text-slate-500">Pratinjau sebelum dibuat</p>
+                    </div>
+                    <span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-indigo-50 text-brand-700">Terjadwal</span>
+                  </div>
+
+                  <div>
+                    <h3 id="preview-subject-title" class="font-extrabold text-slate-900 text-lg">Pemrograman Web</h3>
+                    <p id="preview-subject-code" class="text-xs text-slate-500">IF203 • Pertemuan 8</p>
+                  </div>
+
+                  <div class="divide-y divide-slate-100 text-xs">
+                    <div class="py-2 flex justify-between">
+                      <span class="text-slate-400">Kelas</span>
+                      <span id="preview-class-label" class="font-semibold text-slate-800">TI-3A • 32 mahasiswa</span>
+                    </div>
+                    <div class="py-2 flex justify-between">
+                      <span class="text-slate-400">Dosen</span>
+                      <span class="font-semibold text-slate-800">Dr. Budi Santoso</span>
+                    </div>
+                    <div class="py-2 flex justify-between">
+                      <span class="text-slate-400">Tanggal</span>
+                      <span class="font-semibold text-slate-800">Jumat, 6 November 2026</span>
+                    </div>
+                    <div class="py-2 flex justify-between">
+                      <span class="text-slate-400">Waktu</span>
+                      <span class="font-semibold text-slate-800">13.00-14.40 WIB</span>
+                    </div>
+                    <div class="py-2 flex justify-between">
+                      <span class="text-slate-400">Durasi</span>
+                      <span class="font-semibold text-slate-800">100 menit</span>
+                    </div>
+                    <div class="py-2 flex justify-between">
+                      <span class="text-slate-400">Ruang</span>
+                      <span class="font-semibold text-slate-800">Lab. 2</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="bg-indigo-50/60 border border-indigo-100 p-4 rounded-xl flex items-start gap-2.5">
+                  <i data-lucide="info" class="w-4 h-4 text-brand-600 shrink-0 mt-0.5"></i>
+                  <div class="text-[11px] text-slate-600 leading-relaxed">
+                    <span class="font-bold text-brand-700">Satu mahasiswa, satu kehadiran:</span> Pengiriman ulang dinonaktifkan setelah berhasil. Data yang belum diisi baru menjadi Alpa setelah sesi berakhir, kecuali sudah berstatus Izin.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ============================================== -->
+          <!-- SCREEN 7: DOSEN - PEMANTAUAN & REKAP (PDF Hal 12) -->
+          <!-- ============================================== -->
+          <div id="page-dosen-monitoring" class="page-view hidden space-y-6">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <span class="text-xs font-bold text-brand-600 uppercase tracking-wider">KEHADIRAN KELAS</span>
+                <h2 class="text-2xl font-bold text-slate-900 mt-1">Pemantauan Kehadiran & Rekap</h2>
+                <p class="text-sm text-slate-500 mt-0.5">Pantau sesi berjalan dan tinjau laporan kehadiran kelas Anda.</p>
+              </div>
+              <div class="flex items-center gap-2">
+                <button class="inline-flex items-center gap-1.5 px-3 py-2 bg-white border border-slate-200 text-slate-700 rounded-xl text-xs font-semibold shadow-sm hover:bg-slate-50">
+                  <i data-lucide="download" class="w-3.5 h-3.5 text-brand-600"></i> Unduh CSV
+                </button>
+                <button class="inline-flex items-center gap-1.5 px-3 py-2 bg-white border border-slate-200 text-slate-700 rounded-xl text-xs font-semibold shadow-sm hover:bg-slate-50">
+                  <i data-lucide="printer" class="w-3.5 h-3.5 text-brand-600"></i> Cetak
+                </button>
+              </div>
+            </div>
+
+            <!-- Filters Bar -->
+            <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex flex-wrap items-center gap-3 text-xs">
+              <select class="px-3 py-1.5 rounded-lg border border-slate-200 font-medium bg-white text-slate-700">
+                <option>1-6 November 2026</option>
+              </select>
+              <select class="px-3 py-1.5 rounded-lg border border-slate-200 font-medium bg-white text-slate-700">
+                <option>TI-3A</option>
+                <option>TI-3B</option>
+              </select>
+              <select class="px-3 py-1.5 rounded-lg border border-slate-200 font-medium bg-white text-slate-700">
+                <option>Basis Data</option>
+                <option>Pemrograman Web</option>
+              </select>
+              <select class="px-3 py-1.5 rounded-lg border border-slate-200 font-medium bg-white text-slate-700">
+                <option>Sesi: 6 Nov, 09.00</option>
+              </select>
+            </div>
+
+            <!-- Current Session Status Header -->
+            <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <div class="flex items-center gap-2">
+                  <h3 class="font-extrabold text-slate-900 text-base">Basis Data • Pertemuan 9</h3>
+                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Aktif
+                  </span>
+                </div>
+                <p class="text-xs text-slate-500 mt-1">TI-3A • Jumat, 6 November 2026 • 09.00–10.40 WIB • Dr. Budi Santoso</p>
+              </div>
+              <div class="text-right">
+                <span class="inline-flex items-center gap-1.5 text-xs text-brand-700 font-semibold bg-brand-50 px-2.5 py-1 rounded-lg">
+                  <span class="w-2 h-2 rounded-full bg-brand-600 animate-ping"></span> Pembaruan langsung
+                </span>
+                <div class="text-[10px] text-slate-400 mt-1">Terakhir diperbarui 09.20.00 WIB</div>
+              </div>
+            </div>
+
+            <!-- 4 Metrics Cards -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div class="bg-white p-4 rounded-xl border border-slate-200/80 shadow-sm">
+                <div class="flex justify-between items-start text-xs text-slate-500">
+                  <span>Peserta kelas</span>
+                  <i data-lucide="users" class="w-4 h-4 text-brand-600"></i>
+                </div>
+                <div class="text-2xl font-black text-slate-900 mt-2">32</div>
+                <div class="text-[10px] text-slate-400 mt-1">Mahasiswa terdaftar TI-3A</div>
+              </div>
+
+              <div class="bg-white p-4 rounded-xl border border-slate-200/80 shadow-sm">
+                <div class="flex justify-between items-start text-xs text-slate-500">
+                  <span>Hadir</span>
+                  <i data-lucide="check-circle" class="w-4 h-4 text-emerald-600"></i>
+                </div>
+                <div class="text-2xl font-black text-emerald-700 mt-2">27</div>
+                <div class="text-[10px] text-slate-400 mt-1">84,4% dari peserta kelas</div>
+              </div>
+
+              <div class="bg-white p-4 rounded-xl border border-slate-200/80 shadow-sm">
+                <div class="flex justify-between items-start text-xs text-slate-500">
+                  <span>Izin</span>
+                  <i data-lucide="help-circle" class="w-4 h-4 text-amber-600"></i>
+                </div>
+                <div class="text-2xl font-black text-amber-700 mt-2">1</div>
+                <div class="text-[10px] text-slate-400 mt-1">Izin telah diverifikasi dosen</div>
+              </div>
+
+              <div class="bg-white p-4 rounded-xl border border-slate-200/80 shadow-sm">
+                <div class="flex justify-between items-start text-xs text-slate-500">
+                  <span>Belum mengisi</span>
+                  <i data-lucide="clock" class="w-4 h-4 text-slate-400"></i>
+                </div>
+                <div class="text-2xl font-black text-slate-800 mt-2">4</div>
+                <div class="text-[10px] text-slate-400 mt-1">Bukan Alpa • sesi masih aktif</div>
+              </div>
+            </div>
+
+            <!-- Student List Table -->
+            <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5 space-y-4">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <h3 class="font-bold text-slate-800 text-sm">Daftar kehadiran mahasiswa</h3>
+                  <p class="text-[11px] text-slate-500">Sesi berlangsung • catatan waktu dalam WIB</p>
+                </div>
+                <div class="flex items-center gap-2">
+                  <div class="relative">
+                    <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+                    <input type="text" placeholder="Cari nama atau NIM mahasiswa..." class="pl-8 pr-3 py-1.5 text-xs rounded-lg border border-slate-200 w-52">
+                  </div>
+                  <select class="text-xs border border-slate-200 rounded-lg px-2.5 py-1.5 bg-white text-slate-600">
+                    <option>Semua status</option>
+                    <option>Hadir</option>
+                    <option>Izin</option>
+                    <option>Belum mengisi</option>
+                  </select>
+                  <button class="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600" title="Segarkan data">
+                    <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                  </button>
+                </div>
+              </div>
+
+              <div class="overflow-x-auto">
+                <table class="w-full text-xs text-left">
+                  <thead class="bg-slate-50 text-slate-400 text-[10px] uppercase font-semibold">
+                    <tr>
+                      <th class="py-2.5 px-4">MAHASISWA</th>
+                      <th class="py-2.5 px-4">NIM</th>
+                      <th class="py-2.5 px-4">STATUS KEHADIRAN</th>
+                      <th class="py-2.5 px-4">WAKTU TERCATAT</th>
+                      <th class="py-2.5 px-4">KETERANGAN</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-100">
+                    <tr class="hover:bg-slate-50/50">
+                      <td class="py-3 px-4">
+                        <div class="font-bold text-slate-900">Nadia Putri</div>
+                        <div class="text-[10px] text-slate-400">TI-3A</div>
+                      </td>
+                      <td class="py-3 px-4 text-slate-600">202431001</td>
+                      <td class="py-3 px-4">
+                        <span id="dosen-nadia-status" class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                          <i data-lucide="clock" class="w-3 h-3"></i> Belum mengisi
+                        </span>
+                      </td>
+                      <td class="py-3 px-4 text-slate-400" id="dosen-nadia-time">—</td>
+                      <td class="py-3 px-4 text-slate-500">Menunggu pengiriman</td>
+                    </tr>
+                    <tr class="hover:bg-slate-50/50">
+                      <td class="py-3 px-4">
+                        <div class="font-bold text-slate-900">Fajar Maulana</div>
+                        <div class="text-[10px] text-slate-400">TI-3A</div>
+                      </td>
+                      <td class="py-3 px-4 text-slate-600">202431002</td>
+                      <td class="py-3 px-4">
+                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          <i data-lucide="check" class="w-3 h-3"></i> Hadir
+                        </span>
+                      </td>
+                      <td class="py-3 px-4 text-slate-700 font-medium">09.19.08 WIB</td>
+                      <td class="py-3 px-4 text-slate-500">Kehadiran dikirim</td>
+                    </tr>
+                    <tr class="hover:bg-slate-50/50">
+                      <td class="py-3 px-4">
+                        <div class="font-bold text-slate-900">Rizky Ramadhan</div>
+                        <div class="text-[10px] text-slate-400">TI-3A</div>
+                      </td>
+                      <td class="py-3 px-4 text-slate-600">202431003</td>
+                      <td class="py-3 px-4">
+                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                          <i data-lucide="clock" class="w-3 h-3"></i> Belum mengisi
+                        </span>
+                      </td>
+                      <td class="py-3 px-4 text-slate-400">—</td>
+                      <td class="py-3 px-4 text-slate-500">Menunggu pengiriman</td>
+                    </tr>
+                    <tr class="hover:bg-slate-50/50">
+                      <td class="py-3 px-4">
+                        <div class="font-bold text-slate-900">Alya Safitri</div>
+                        <div class="text-[10px] text-slate-400">TI-3A</div>
+                      </td>
+                      <td class="py-3 px-4 text-slate-600">202431004</td>
+                      <td class="py-3 px-4">
+                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          <i data-lucide="check" class="w-3 h-3"></i> Hadir
+                        </span>
+                      </td>
+                      <td class="py-3 px-4 text-slate-700 font-medium">09.06.22 WIB</td>
+                      <td class="py-3 px-4 text-slate-500">Kehadiran dikirim</td>
+                    </tr>
+                    <tr class="hover:bg-slate-50/50">
+                      <td class="py-3 px-4">
+                        <div class="font-bold text-slate-900">Bagas Pratama</div>
+                        <div class="text-[10px] text-slate-400">TI-3A</div>
+                      </td>
+                      <td class="py-3 px-4 text-slate-600">202431005</td>
+                      <td class="py-3 px-4">
+                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                          <i data-lucide="help-circle" class="w-3 h-3"></i> Izin
+                        </span>
+                      </td>
+                      <td class="py-3 px-4 text-slate-700 font-medium">08.50.10 WIB</td>
+                      <td class="py-3 px-4 text-slate-500">Keperluan keluarga</td>
+                    </tr>
+                    <tr class="hover:bg-slate-50/50">
+                      <td class="py-3 px-4">
+                        <div class="font-bold text-slate-900">Citra Lestari</div>
+                        <div class="text-[10px] text-slate-400">TI-3A</div>
+                      </td>
+                      <td class="py-3 px-4 text-slate-600">202431006</td>
+                      <td class="py-3 px-4">
+                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          <i data-lucide="check" class="w-3 h-3"></i> Hadir
+                        </span>
+                      </td>
+                      <td class="py-3 px-4 text-slate-700 font-medium">09.04.31 WIB</td>
+                      <td class="py-3 px-4 text-slate-500">Kehadiran dikirim</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+                <span>1-6 dari 32 mahasiswa</span>
+                <div class="flex items-center gap-1">
+                  <button class="px-2.5 py-1 rounded border border-slate-200">Sebelumnya</button>
+                  <button class="px-2.5 py-1 rounded bg-brand-600 text-white font-bold">1</button>
+                  <button class="px-2.5 py-1 rounded border border-slate-200">2</button>
+                  <span class="px-1">...</span>
+                  <button class="px-2.5 py-1 rounded border border-slate-200">6</button>
+                  <button class="px-2.5 py-1 rounded border border-slate-200">Berikutnya</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Notes & Rekap Sesi Selesai Comparison -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div class="bg-amber-50/60 border border-amber-200/70 p-4 rounded-xl flex items-start gap-3">
+                <i data-lucide="clock" class="w-5 h-5 text-amber-600 shrink-0 mt-0.5"></i>
+                <div class="text-xs text-amber-900">
+                  <span class="font-bold">Belum mengisi tidak sama dengan Alpa:</span> Selama sesi aktif, mahasiswa masih dapat mengirim kehadiran. Status Alpa ditetapkan setelah pukul 10.40 WIB jika tidak ada kehadiran atau izin.
+                </div>
+              </div>
+
+              <div class="bg-white p-4 rounded-xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-xs font-bold text-slate-800">Rekap sesi selesai</span>
+                  <span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-slate-100 text-slate-600">Selesai</span>
+                </div>
+                <div class="text-xs text-slate-500">Basis Data • TI-3A • 5 November 2026</div>
+                <div class="flex items-center gap-4 mt-2 text-xs font-bold">
+                  <span class="text-emerald-700">Hadir: 28</span>
+                  <span class="text-amber-700">Izin: 2</span>
+                  <span class="text-rose-700">Alpa: 2</span>
+                </div>
+                <div class="text-[10px] text-slate-400 mt-2">Rizky Ramadhan: Alpa • tidak mengisi hingga sesi berakhir.</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ============================================== -->
+          <!-- SCREEN 8: MAHASISWA - DASHBOARD (PDF Hal 13)   -->
+          <!-- ============================================== -->
+          <div id="page-mhs-dashboard" class="page-view hidden space-y-6">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <span class="text-xs font-bold text-brand-600 uppercase tracking-wider">RUANG MAHASISWA / SISWA</span>
+                <h2 class="text-2xl font-bold text-slate-900 mt-1">Selamat pagi, Nadia</h2>
+                <p class="text-sm text-slate-500 mt-0.5">Jumat, 6 November 2026 • TI-3A • NIM 202431001</p>
+              </div>
+              <button onclick="navigateTo('mhs-history')" class="inline-flex items-center gap-2 text-xs font-semibold text-slate-600 hover:text-slate-900 bg-white border border-slate-200 px-4 py-2.5 rounded-xl shadow-sm">
+                <i data-lucide="history" class="w-4 h-4"></i> Lihat riwayat
+              </button>
+            </div>
+
+            <!-- Stats 4 Cards -->
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm">
+                <div class="flex justify-between items-start text-xs text-slate-500">
+                  <span>Persentase kehadiran</span>
+                  <div class="p-1.5 rounded-lg bg-indigo-50 text-brand-600"><i data-lucide="trending-up" class="w-4 h-4"></i></div>
+                </div>
+                <div id="mhs-stat-percent" class="text-3xl font-extrabold text-slate-900 mt-2">90,6%</div>
+                <div class="text-[11px] text-slate-400 mt-1">29 Hadir dari 32 pertemuan selesai</div>
+              </div>
+
+              <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm">
+                <div class="flex justify-between items-start text-xs text-slate-500">
+                  <span>Hadir</span>
+                  <div class="p-1.5 rounded-lg bg-emerald-50 text-emerald-600"><i data-lucide="check-circle" class="w-4 h-4"></i></div>
+                </div>
+                <div id="mhs-stat-hadir" class="text-3xl font-extrabold text-slate-900 mt-2">29</div>
+                <div class="text-[11px] text-slate-400 mt-1">Kehadiran berhasil tercatat</div>
+              </div>
+
+              <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm">
+                <div class="flex justify-between items-start text-xs text-slate-500">
+                  <span>Izin</span>
+                  <div class="p-1.5 rounded-lg bg-amber-50 text-amber-600"><i data-lucide="help-circle" class="w-4 h-4"></i></div>
+                </div>
+                <div class="text-3xl font-extrabold text-slate-900 mt-2">2</div>
+                <div class="text-[11px] text-slate-400 mt-1">Izin terverifikasi oleh dosen</div>
+              </div>
+
+              <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm">
+                <div class="flex justify-between items-start text-xs text-slate-500">
+                  <span>Alpa</span>
+                  <div class="p-1.5 rounded-lg bg-rose-50 text-rose-600"><i data-lucide="x-circle" class="w-4 h-4"></i></div>
+                </div>
+                <div class="text-3xl font-extrabold text-slate-900 mt-2">1</div>
+                <div class="text-[11px] text-slate-400 mt-1">Tanpa kehadiran pada sesi selesai</div>
+              </div>
+            </div>
+
+            <!-- Active Session Callout Banner -->
+            <div id="mhs-dashboard-active-banner" class="bg-gradient-to-r from-brand-50 to-indigo-50 border border-brand-200 rounded-2xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-2xl bg-brand-600 text-white flex items-center justify-center shrink-0 shadow-md shadow-brand-200">
+                  <i data-lucide="scan-line" class="w-6 h-6"></i>
+                </div>
+                <div>
+                  <div class="flex items-center gap-2">
+                    <h3 class="font-bold text-slate-900 text-base">Sesi Basis Data sedang dibuka</h3>
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700">
+                      <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Aktif
+                    </span>
+                  </div>
+                  <p id="mhs-banner-status-text" class="text-xs text-slate-600 mt-0.5">Anda belum mengisi kehadiran. Sesi berakhir pukul 10.40 WIB.</p>
+                </div>
+              </div>
+              <button onclick="navigateTo('mhs-attendance')" class="px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold shadow-md shadow-brand-200 transition flex items-center gap-2 shrink-0">
+                <i data-lucide="arrow-right" class="w-4 h-4"></i> Buka absensi
+              </button>
+            </div>
+
+            <!-- Two Column Split: Today's Schedule & Last Attendance -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              
+              <!-- Left: Jadwal Hari Ini -->
+              <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6">
+                <div class="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 class="font-bold text-slate-800 text-base">Jadwal hari ini</h3>
+                    <p class="text-xs text-slate-500">3 mata pelajaran • Jumat, 6 November 2026</p>
+                  </div>
+                  <span class="text-xs text-slate-400">WIB</span>
+                </div>
+
+                <div class="space-y-3">
+                  <!-- Class 1 -->
+                  <div class="p-4 rounded-xl border border-emerald-200 bg-emerald-50/20 flex items-center justify-between">
+                    <div class="flex items-center gap-4">
+                      <div>
+                        <div class="text-sm font-extrabold text-slate-900">09.00</div>
+                        <div class="text-[10px] text-slate-400">s.d. 10.40 WIB</div>
+                      </div>
+                      <div class="h-8 w-[1px] bg-slate-200"></div>
+                      <div>
+                        <div class="text-xs font-bold text-slate-900">Basis Data</div>
+                        <div class="text-[11px] text-slate-500">TI-3A • Ruang B.204 • Dr. Budi Santoso</div>
+                      </div>
+                    </div>
+                    <span class="px-2.5 py-1 text-[11px] font-bold rounded-full bg-emerald-100 text-emerald-700">Aktif</span>
+                  </div>
+
+                  <!-- Class 2 -->
+                  <div class="p-4 rounded-xl border border-slate-200 flex items-center justify-between">
+                    <div class="flex items-center gap-4">
+                      <div>
+                        <div class="text-sm font-extrabold text-slate-900">13.00</div>
+                        <div class="text-[10px] text-slate-400">s.d. 14.40 WIB</div>
+                      </div>
+                      <div class="h-8 w-[1px] bg-slate-200"></div>
+                      <div>
+                        <div class="text-xs font-bold text-slate-900">Pemrograman Web</div>
+                        <div class="text-[11px] text-slate-500">TI-3A • Lab. 2 • Dr. Budi Santoso</div>
+                      </div>
+                    </div>
+                    <span class="px-2.5 py-1 text-[11px] font-bold rounded-full bg-indigo-50 text-brand-700">Terjadwal</span>
+                  </div>
+
+                  <!-- Class 3 -->
+                  <div class="p-4 rounded-xl border border-slate-200 flex items-center justify-between">
+                    <div class="flex items-center gap-4">
+                      <div>
+                        <div class="text-sm font-extrabold text-slate-900">15.00</div>
+                        <div class="text-[10px] text-slate-400">s.d. 16.40 WIB</div>
+                      </div>
+                      <div class="h-8 w-[1px] bg-slate-200"></div>
+                      <div>
+                        <div class="text-xs font-bold text-slate-900">Statistika</div>
+                        <div class="text-[11px] text-slate-500">TI-3A • Ruang B.201 • Siti Rahma, M.Si.</div>
+                      </div>
+                    </div>
+                    <span class="px-2.5 py-1 text-[11px] font-bold rounded-full bg-indigo-50 text-brand-700">Terjadwal</span>
+                  </div>
+                </div>
+
+                <div class="mt-4 text-[11px] text-slate-400 flex items-center gap-1.5">
+                  <i data-lucide="info" class="w-3.5 h-3.5"></i> Absensi hanya tersedia saat dosen membuka sesi.
+                </div>
+              </div>
+
+              <!-- Right: Kehadiran Terakhir & Semester -->
+              <div class="space-y-6">
+                <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6">
+                  <div class="flex items-center justify-between mb-4">
+                    <div>
+                      <h4 class="font-bold text-slate-800 text-sm">Kehadiran terakhir</h4>
+                      <p class="text-[11px] text-slate-400">Kamis, 5 November 2026</p>
+                    </div>
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700">Hadir</span>
+                  </div>
+                  <div>
+                    <h5 class="font-bold text-slate-900 text-sm">Basis Data</h5>
+                    <p class="text-xs text-slate-500 mt-0.5">Pertemuan 8 • TI-3A</p>
+                  </div>
+                  <div class="text-xs text-slate-500 mt-2 flex items-center gap-1.5">
+                    <i data-lucide="clock" class="w-3.5 h-3.5 text-slate-400"></i> Tercatat 09.04.12 WIB
+                  </div>
+                  <div class="mt-4 pt-3 border-t border-slate-100 text-[11px] text-slate-400">
+                    Kehadiran Anda sudah tersimpan dan dapat dilihat di riwayat.
+                  </div>
+                </div>
+
+                <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6">
+                  <h4 class="font-bold text-slate-800 text-sm">Semester Ganjil 2026/2027</h4>
+                  <p class="text-xs text-slate-500 mt-1">Ringkasan dihitung dari 32 pertemuan selesai pada semester ini. Sesi aktif belum termasuk.</p>
+                  <button onclick="navigateTo('mhs-history')" class="mt-4 text-xs font-bold text-brand-600 hover:text-brand-800 flex items-center gap-1">
+                    Lihat riwayat kehadiran <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ============================================== -->
+          <!-- SCREEN 9: MAHASISWA - HALAMAN ABSENSI (Hal 14 & 15) -->
+          <!-- ============================================== -->
+          <div id="page-mhs-attendance" class="page-view hidden space-y-6">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <span class="text-xs font-bold text-brand-600 uppercase tracking-wider">KEHADIRAN HARI INI</span>
+                <h2 class="text-2xl font-bold text-slate-900 mt-1">Halaman Absensi</h2>
+                <p class="text-sm text-slate-500 mt-0.5">Isi kehadiran pada sesi aktif sesuai kelas dan jadwal Anda.</p>
+              </div>
+              <button onclick="navigateTo('mhs-history')" class="inline-flex items-center gap-2 text-xs font-semibold text-slate-600 hover:text-slate-900 bg-white border border-slate-200 px-4 py-2 rounded-xl shadow-sm">
+                <i data-lucide="history" class="w-4 h-4"></i> Lihat riwayat
+              </button>
+            </div>
+
+            <!-- SUCCESS BANNER (Shown when attendance submitted - PDF Hal 15) -->
+            <div id="attendance-success-banner" class="hidden p-4 rounded-xl bg-emerald-50 border border-emerald-200 flex items-start gap-3">
+              <div class="p-1.5 bg-emerald-100 text-emerald-700 rounded-lg shrink-0 mt-0.5">
+                <i data-lucide="check" class="w-4 h-4"></i>
+              </div>
+              <div>
+                <h4 class="font-bold text-xs text-emerald-900">Kehadiran berhasil dicatat</h4>
+                <p class="text-xs text-emerald-700 mt-0.5">Nadia, Anda tercatat Hadir pada sesi Basis Data. Bukti kehadiran tersimpan otomatis di riwayat Anda.</p>
+              </div>
+            </div>
+
+            <!-- Student ID Bar -->
+            <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-brand-100 text-brand-700 font-bold flex items-center justify-center text-xs">
+                  NP
+                </div>
+                <div>
+                  <div class="text-xs font-bold text-slate-900">Nadia Putri</div>
+                  <div class="text-[11px] text-slate-500">NIM 202431001 • Teknik Informatika • TI-3A</div>
+                </div>
+              </div>
+              <span class="text-xs text-slate-400">Jumat, 6 November 2026</span>
+            </div>
+
+            <!-- Two Column Layout: Main Active Attendance Card & Guide -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              
+              <!-- Left: Active Session Attendance Box -->
+              <div class="lg:col-span-2 space-y-6">
+                <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 space-y-6">
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <h3 class="font-bold text-slate-800 text-base">Sesi aktif</h3>
+                      <p class="text-xs text-slate-500">1 sesi tersedia untuk kelas Anda</p>
+                    </div>
+                    <span class="text-xs text-slate-400 flex items-center gap-1 font-mono">
+                      <i data-lucide="clock" class="w-3.5 h-3.5"></i> <span id="clock-display">09.20 WIB</span>
+                    </span>
+                  </div>
+
+                  <!-- Session Details -->
+                  <div class="border-b border-slate-100 pb-5">
+                    <div class="flex items-center justify-between mb-2">
+                      <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-700">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Aktif
+                      </span>
+                      <span class="text-xs font-mono text-slate-400">IF201 • Pertemuan 9</span>
+                    </div>
+
+                    <h2 class="text-2xl font-black text-slate-900">Basis Data</h2>
+                    <p class="text-xs text-slate-600 mt-1">Dr. Budi Santoso • TI-3A • Ruang B.204</p>
+                    <p class="text-xs text-slate-500 mt-0.5">Topik: Normalisasi dan perancangan basis data</p>
+
+                    <div class="mt-4 p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between text-xs">
+                      <div class="flex items-center gap-2 text-slate-700">
+                        <i data-lucide="calendar" class="w-4 h-4 text-brand-600"></i>
+                        <span class="font-bold">09.00–10.40 WIB</span>
+                      </div>
+                      <span id="session-remaining-time" class="text-slate-400 text-[11px]">Tersisa 1 jam 20 menit untuk mengisi kehadiran</span>
+                    </div>
+                  </div>
+
+                  <!-- INTERACTIVE ATTENDANCE SUBMISSION ACTION -->
+                  <div id="attendance-action-area" class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2">
+                    
+                    <!-- Pre-submission State (PDF Hal 14) -->
+                    <div id="state-not-submitted" class="w-full flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div>
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                          <i data-lucide="clock" class="w-3.5 h-3.5"></i> Belum mengisi
+                        </span>
+                        <p class="text-[11px] text-slate-400 mt-1.5">Kirim satu kali untuk tercatat Hadir.</p>
+                      </div>
+                      <button id="btn-submit-attendance" onclick="submitAttendance()" class="px-6 py-3 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold shadow-md shadow-brand-200 transition flex items-center justify-center gap-2 group">
+                        <i data-lucide="send" class="w-4 h-4 group-hover:translate-x-0.5 transition"></i> Kirim kehadiran sekarang
+                      </button>
+                    </div>
+
+                    <!-- Post-submission State (PDF Hal 15) -->
+                    <div id="state-submitted" class="hidden w-full flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div>
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          <i data-lucide="check-circle" class="w-3.5 h-3.5"></i> Hadir
+                        </span>
+                        <p class="text-[11px] text-slate-600 mt-1.5 font-medium">Tercatat pada 6 November 2026, 09.21.14 WIB</p>
+                        <p class="text-[10px] text-slate-400 mt-0.5">Kehadiran tidak dapat dikirim ulang</p>
+                      </div>
+                      <button disabled class="px-6 py-3 bg-slate-100 text-slate-400 border border-slate-200 rounded-xl text-xs font-bold cursor-not-allowed flex items-center justify-center gap-2">
+                        <i data-lucide="check" class="w-4 h-4 text-emerald-600"></i> Kehadiran sudah dikirim
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Next Session Card (PDF Hal 14 bottom) -->
+                <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 space-y-3">
+                  <div>
+                    <h3 class="font-bold text-slate-800 text-sm">Sesi berikutnya</h3>
+                    <p class="text-xs text-slate-400">Belum dapat diisi sebelum waktu sesi dimulai</p>
+                  </div>
+                  <div class="flex items-center justify-between pt-2">
+                    <div>
+                      <h4 class="font-bold text-slate-900 text-sm">Pemrograman Web</h4>
+                      <p class="text-xs text-slate-500 mt-0.5">13.00–14.40 WIB • Dr. Budi Santoso • Lab. 2</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <span class="px-2.5 py-1 text-[10px] font-bold rounded-full bg-indigo-50 text-brand-700">Terjadwal</span>
+                      <span class="px-3 py-1.5 bg-slate-100 text-slate-400 text-xs font-medium rounded-lg">Belum dibuka</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Right: Guide & Policy Notes -->
+              <div class="space-y-6">
+                <!-- How to submit attendance -->
+                <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 space-y-4">
+                  <h4 class="font-bold text-slate-900 text-sm">Cara mengisi absensi</h4>
+                  <p class="text-xs text-slate-500">Cepat, tanpa kode atau formulir tambahan</p>
+
+                  <div class="space-y-3 text-xs">
+                    <div class="flex items-start gap-3">
+                      <div class="w-5 h-5 rounded-full bg-brand-50 text-brand-700 font-bold flex items-center justify-center shrink-0 text-[11px]">1</div>
+                      <div>
+                        <div class="font-bold text-slate-800">Periksa sesi Anda</div>
+                        <div class="text-slate-500 text-[11px]">Pastikan mata pelajaran dan kelas sudah sesuai.</div>
+                      </div>
+                    </div>
+
+                    <div class="flex items-start gap-3">
+                      <div class="w-5 h-5 rounded-full bg-brand-50 text-brand-700 font-bold flex items-center justify-center shrink-0 text-[11px]">2</div>
+                      <div>
+                        <div class="font-bold text-slate-800">Kirim kehadiran</div>
+                        <div class="text-slate-500 text-[11px]">Tekan tombol kirim saat sesi berstatus Aktif.</div>
+                      </div>
+                    </div>
+
+                    <div class="flex items-start gap-3">
+                      <div class="w-5 h-5 rounded-full bg-brand-50 text-brand-700 font-bold flex items-center justify-center shrink-0 text-[11px]">3</div>
+                      <div>
+                        <div class="font-bold text-slate-800">Pastikan sudah Hadir</div>
+                        <div class="text-slate-500 text-[11px]">Periksa status Hadir dan waktu tercatat.</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Privacy & Single Submission Note -->
+                <div class="bg-indigo-50/60 border border-indigo-100 p-5 rounded-2xl space-y-2">
+                  <div class="flex items-center gap-2 text-brand-700 font-bold text-xs">
+                    <i data-lucide="shield-check" class="w-4 h-4"></i> Kehadiran bersifat pribadi
+                  </div>
+                  <p class="text-[11px] text-slate-600 leading-relaxed">
+                    Satu kali pengiriman per sesi. Jika berhalangan hadir atau mengalami kendala, hubungi dosen pengampu untuk pengajuan izin.
+                  </p>
+                </div>
+
+                <div class="text-[11px] text-slate-400 leading-relaxed p-2">
+                  Belum mengisi selama sesi aktif tidak dianggap Alpa. Status akhir ditentukan setelah sesi selesai.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ============================================== -->
+          <!-- SCREEN 10: MAHASISWA - RIWAYAT KEHADIRAN (Hal 16) -->
+          <!-- ============================================== -->
+          <div id="page-mhs-history" class="page-view hidden space-y-6">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <span class="text-xs font-bold text-brand-600 uppercase tracking-wider">CATATAN PRIBADI</span>
+                <h2 class="text-2xl font-bold text-slate-900 mt-1">Riwayat Kehadiran</h2>
+                <p class="text-sm text-slate-500 mt-0.5">Tinjau seluruh catatan kehadiran Anda pada semester berjalan.</p>
+              </div>
+              <button onclick="navigateTo('mhs-dashboard')" class="inline-flex items-center gap-2 text-xs font-semibold text-slate-600 hover:text-slate-900 bg-white border border-slate-200 px-4 py-2 rounded-xl shadow-sm">
+                <i data-lucide="arrow-left" class="w-4 h-4"></i> Kembali ke dashboard
+              </button>
+            </div>
+
+            <!-- Stats 4 Cards -->
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm">
+                <div class="flex justify-between items-start text-xs text-slate-500">
+                  <span>Pertemuan selesai</span>
+                  <i data-lucide="calendar" class="w-4 h-4 text-brand-600"></i>
+                </div>
+                <div class="text-2xl font-black text-slate-900 mt-2">32</div>
+                <div class="text-[11px] text-slate-400 mt-1">Semester Ganjil 2026/2027</div>
+              </div>
+
+              <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm">
+                <div class="flex justify-between items-start text-xs text-slate-500">
+                  <span>Hadir</span>
+                  <i data-lucide="check-circle" class="w-4 h-4 text-emerald-600"></i>
+                </div>
+                <div class="text-2xl font-black text-slate-900 mt-2">29</div>
+                <div class="text-[11px] text-slate-400 mt-1">90,6% dari pertemuan selesai</div>
+              </div>
+
+              <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm">
+                <div class="flex justify-between items-start text-xs text-slate-500">
+                  <span>Izin</span>
+                  <i data-lucide="help-circle" class="w-4 h-4 text-amber-600"></i>
+                </div>
+                <div class="text-2xl font-black text-slate-900 mt-2">2</div>
+                <div class="text-[11px] text-slate-400 mt-1">Izin telah diverifikasi</div>
+              </div>
+
+              <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm">
+                <div class="flex justify-between items-start text-xs text-slate-500">
+                  <span>Alpa</span>
+                  <i data-lucide="x-circle" class="w-4 h-4 text-rose-600"></i>
+                </div>
+                <div class="text-2xl font-black text-slate-900 mt-2">1</div>
+                <div class="text-[11px] text-slate-400 mt-1">Tidak hadir tanpa izin</div>
+              </div>
+            </div>
+
+            <!-- Table Card -->
+            <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 space-y-4">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <h3 class="font-bold text-slate-900 text-base">Catatan kehadiran Nadia Putri</h3>
+                  <p class="text-xs text-slate-500">NIM 202431001 • TI-3A • Teknik Informatika</p>
+                </div>
+                <span class="text-xs text-slate-400">Terbaru lebih dahulu</span>
+              </div>
+
+              <!-- Filter Bar -->
+              <div class="flex flex-wrap items-center gap-2 pt-1 pb-2">
+                <select class="px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-medium bg-white text-slate-700">
+                  <option>Semester Ganjil 2026/2027</option>
+                </select>
+                <select class="px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-medium bg-white text-slate-700">
+                  <option>Semua mata pelajaran</option>
+                  <option>Basis Data</option>
+                  <option>Pemrograman Web</option>
+                </select>
+                <select class="px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-medium bg-white text-slate-700">
+                  <option>Semua status</option>
+                  <option>Hadir</option>
+                  <option>Izin</option>
+                  <option>Alpa</option>
+                </select>
+              </div>
+
+              <div class="overflow-x-auto">
+                <table class="w-full text-xs text-left">
+                  <thead class="bg-slate-50 text-slate-400 text-[10px] uppercase font-semibold">
+                    <tr>
+                      <th class="py-2.5 px-4">TANGGAL</th>
+                      <th class="py-2.5 px-4">MATA PELAJARAN</th>
+                      <th class="py-2.5 px-4">DOSEN / GURU</th>
+                      <th class="py-2.5 px-4">PERTEMUAN</th>
+                      <th class="py-2.5 px-4">WAKTU TERCATAT</th>
+                      <th class="py-2.5 px-4 text-right">STATUS</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-100">
+                    <tr class="hover:bg-slate-50/50">
+                      <td class="py-3.5 px-4 font-medium text-slate-700">5 Nov 2026</td>
+                      <td class="py-3.5 px-4">
+                        <div class="font-bold text-slate-900">Basis Data</div>
+                        <div class="text-[10px] text-slate-400">IF201 • TI-3A</div>
+                      </td>
+                      <td class="py-3.5 px-4 text-slate-700">Dr. Budi Santoso</td>
+                      <td class="py-3.5 px-4 text-slate-600">8</td>
+                      <td class="py-3.5 px-4 text-slate-600 font-medium">09.04.12 WIB</td>
+                      <td class="py-3.5 px-4 text-right">
+                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          <i data-lucide="check" class="w-3 h-3"></i> Hadir
+                        </span>
+                      </td>
+                    </tr>
+                    <tr class="hover:bg-slate-50/50">
+                      <td class="py-3.5 px-4 font-medium text-slate-700">4 Nov 2026</td>
+                      <td class="py-3.5 px-4">
+                        <div class="font-bold text-slate-900">Pemrograman Web</div>
+                        <div class="text-[10px] text-slate-400">IF203 • TI-3A</div>
+                      </td>
+                      <td class="py-3.5 px-4 text-slate-700">Dr. Budi Santoso</td>
+                      <td class="py-3.5 px-4 text-slate-600">7</td>
+                      <td class="py-3.5 px-4 text-slate-600 font-medium">13.02.45 WIB</td>
+                      <td class="py-3.5 px-4 text-right">
+                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          <i data-lucide="check" class="w-3 h-3"></i> Hadir
+                        </span>
+                      </td>
+                    </tr>
+                    <tr class="hover:bg-slate-50/50">
+                      <td class="py-3.5 px-4 font-medium text-slate-700">3 Nov 2026</td>
+                      <td class="py-3.5 px-4">
+                        <div class="font-bold text-slate-900">Statistika</div>
+                        <div class="text-[10px] text-slate-400">IF205 • TI-3A</div>
+                      </td>
+                      <td class="py-3.5 px-4 text-slate-700">Siti Rahma, M.Si.</td>
+                      <td class="py-3.5 px-4 text-slate-600">8</td>
+                      <td class="py-3.5 px-4 text-slate-600 font-medium">15.01.20 WIB</td>
+                      <td class="py-3.5 px-4 text-right">
+                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          <i data-lucide="check" class="w-3 h-3"></i> Hadir
+                        </span>
+                      </td>
+                    </tr>
+                    <tr class="hover:bg-slate-50/50">
+                      <td class="py-3.5 px-4 font-medium text-slate-700">2 Nov 2026</td>
+                      <td class="py-3.5 px-4">
+                        <div class="font-bold text-slate-900">Jaringan Komputer</div>
+                        <div class="text-[10px] text-slate-400">IF207 • TI-3A</div>
+                      </td>
+                      <td class="py-3.5 px-4 text-slate-700">Andi Pratama</td>
+                      <td class="py-3.5 px-4 text-slate-600">8</td>
+                      <td class="py-3.5 px-4 text-slate-600 font-medium">09.05.08 WIB</td>
+                      <td class="py-3.5 px-4 text-right">
+                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          <i data-lucide="check" class="w-3 h-3"></i> Hadir
+                        </span>
+                      </td>
+                    </tr>
+                    <tr class="hover:bg-slate-50/50">
+                      <td class="py-3.5 px-4 font-medium text-slate-700">30 Okt 2026</td>
+                      <td class="py-3.5 px-4">
+                        <div class="font-bold text-slate-900">Basis Data</div>
+                        <div class="text-[10px] text-slate-400">IF201 • TI-3A</div>
+                      </td>
+                      <td class="py-3.5 px-4 text-slate-700">Dr. Budi Santoso</td>
+                      <td class="py-3.5 px-4 text-slate-600">7</td>
+                      <td class="py-3.5 px-4 text-slate-400">—</td>
+                      <td class="py-3.5 px-4 text-right">
+                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                          <i data-lucide="help-circle" class="w-3 h-3"></i> Izin
+                        </span>
+                      </td>
+                    </tr>
+                    <tr class="hover:bg-slate-50/50">
+                      <td class="py-3.5 px-4 font-medium text-slate-700">29 Okt 2026</td>
+                      <td class="py-3.5 px-4">
+                        <div class="font-bold text-slate-900">Pemrograman Web</div>
+                        <div class="text-[10px] text-slate-400">IF203 • TI-3A</div>
+                      </td>
+                      <td class="py-3.5 px-4 text-slate-700">Dr. Budi Santoso</td>
+                      <td class="py-3.5 px-4 text-slate-600">6</td>
+                      <td class="py-3.5 px-4 text-slate-400">—</td>
+                      <td class="py-3.5 px-4 text-right">
+                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200">
+                          <i data-lucide="x" class="w-3 h-3"></i> Alpa
+                        </span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+                <span>Menampilkan 1-6 dari 32 catatan</span>
+                <div class="flex items-center gap-1">
+                  <button class="px-2.5 py-1 rounded border border-slate-200">Sebelumnya</button>
+                  <button class="px-2.5 py-1 rounded bg-brand-600 text-white font-bold">1</button>
+                  <button class="px-2.5 py-1 rounded border border-slate-200">2</button>
+                  <span class="px-1">...</span>
+                  <button class="px-2.5 py-1 rounded border border-slate-200">6</button>
+                  <button class="px-2.5 py-1 rounded border border-slate-200">Berikutnya</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Bottom Notes -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div class="bg-indigo-50/60 border border-indigo-100 p-4 rounded-xl flex items-start gap-3">
+                <i data-lucide="info" class="w-5 h-5 text-brand-600 shrink-0 mt-0.5"></i>
+                <div class="text-xs text-slate-600">
+                  <span class="font-bold text-brand-700">Hanya menampilkan sesi yang selesai:</span> Sesi Basis Data hari ini masih aktif dan belum masuk ke ringkasan ini. Status serta waktu pengiriman dapat dilihat di halaman Absensi.
+                </div>
+              </div>
+
+              <div class="bg-white p-4 rounded-xl border border-slate-200/80 shadow-sm text-xs space-y-2">
+                <span class="font-bold text-slate-800">Tentang status kehadiran</span>
+                <div class="flex items-center gap-3">
+                  <span class="inline-flex items-center gap-1 text-[11px] text-emerald-700 font-semibold"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Hadir</span>
+                  <span class="inline-flex items-center gap-1 text-[11px] text-amber-700 font-semibold"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Izin</span>
+                  <span class="inline-flex items-center gap-1 text-[11px] text-rose-700 font-semibold"><span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span> Alpa</span>
+                </div>
+                <p class="text-[10px] text-slate-400">Hadir: pengiriman berhasil. Izin: disetujui dosen. Alpa: tidak mengisi hingga sesi berakhir tanpa izin.</p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </main>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- MOBILE SIMULATOR FRAME (PDF Hal 17 & 18)        -->
+    <!-- ============================================== -->
+    <div id="mobile-frame-container" class="hidden my-8 w-full max-w-[390px] bg-slate-900 rounded-[44px] p-3.5 shadow-2xl border-4 border-slate-800">
+      
+      <!-- Phone Outer Shell -->
+      <div class="bg-white rounded-[36px] overflow-hidden flex flex-col h-[780px] shadow-inner relative">
+        
+        <!-- Phone Status Bar -->
+        <div class="bg-white px-6 pt-3 pb-2 flex items-center justify-between text-xs font-semibold text-slate-800 shrink-0 select-none">
+          <span>09.20</span>
+          <div class="w-20 h-4 bg-slate-900 rounded-full mx-auto -mt-1"></div>
+          <div class="flex items-center gap-1.5">
+            <i data-lucide="signal" class="w-3.5 h-3.5"></i>
+            <i data-lucide="wifi" class="w-3.5 h-3.5"></i>
+            <i data-lucide="battery-medium" class="w-4 h-4"></i>
+          </div>
+        </div>
+
+        <!-- Phone App Header -->
+        <div class="px-5 py-3 border-b border-slate-100 flex items-center justify-between bg-white shrink-0">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-xl bg-brand-600 text-white flex items-center justify-center shadow-sm">
+              <i data-lucide="check-square" class="w-4 h-4"></i>
+            </div>
+            <span class="font-extrabold text-slate-900 text-sm">Absensi Kelas</span>
+          </div>
+          <div class="flex items-center gap-3">
+            <i data-lucide="bell" class="w-4 h-4 text-slate-400"></i>
+            <div class="w-7 h-7 rounded-full bg-brand-100 text-brand-700 font-bold flex items-center justify-center text-[10px]">
+              NP
+            </div>
+          </div>
+        </div>
+
+        <!-- Mobile Screen Content (Scrollable) -->
+        <div class="flex-1 overflow-y-auto scrollbar-thin p-4 space-y-4 bg-slate-50/50">
+          
+          <!-- MOBILE VIEW 1: DASHBOARD (PDF Hal 17) -->
+          <div id="mobile-view-dashboard" class="mobile-subview space-y-4">
+            <div>
+              <span class="text-[10px] font-bold text-brand-600 uppercase tracking-wider">MAHASISWA / SISWA</span>
+              <h2 class="text-xl font-extrabold text-slate-900">Selamat pagi, Nadia</h2>
+              <p class="text-xs text-slate-500">Jumat, 6 November 2026<br>TI-3A • NIM 202431001</p>
+            </div>
+
+            <!-- Active Card Banner -->
+            <div class="bg-indigo-50/80 border border-brand-200 rounded-2xl p-4 space-y-3">
+              <div class="flex items-center justify-between">
+                <span class="text-[10px] font-bold text-brand-700 tracking-wider">ABSENSI DIBUKA</span>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 flex items-center gap-1">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Aktif
+                </span>
+              </div>
+              <div>
+                <h3 class="font-extrabold text-slate-900 text-base">Basis Data</h3>
+                <p class="text-xs text-slate-600 mt-0.5">Anda belum mengisi kehadiran. Sesi berakhir pukul 10.40 WIB.</p>
+              </div>
+              <button onclick="switchMobileTab('absensi')" class="w-full py-2.5 bg-brand-600 text-white rounded-xl text-xs font-bold shadow-md shadow-brand-200 flex items-center justify-center gap-2">
+                Buka absensi <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+              </button>
+            </div>
+
+            <!-- Ringkasan Semester 2x2 Grid -->
+            <div>
+              <div class="flex justify-between items-center mb-2">
+                <h4 class="font-bold text-xs text-slate-800">Ringkasan semester</h4>
+                <span class="text-[10px] text-slate-400">Ganjil 2026/2027</span>
+              </div>
+              <div class="grid grid-cols-2 gap-2.5">
+                <div class="bg-white p-3 rounded-xl border border-slate-200/80">
+                  <span class="text-[10px] text-slate-500">Kehadiran</span>
+                  <div class="text-xl font-black text-slate-900 mt-1">90,6%</div>
+                  <div class="text-[9px] text-slate-400">32 pertemuan selesai</div>
+                </div>
+                <div class="bg-white p-3 rounded-xl border border-slate-200/80">
+                  <span class="text-[10px] text-slate-500">Hadir</span>
+                  <div class="text-xl font-black text-slate-900 mt-1">29</div>
+                  <div class="text-[9px] text-slate-400">Kehadiran tercatat</div>
+                </div>
+                <div class="bg-white p-3 rounded-xl border border-slate-200/80">
+                  <span class="text-[10px] text-slate-500">Izin</span>
+                  <div class="text-xl font-black text-slate-900 mt-1">2</div>
+                  <div class="text-[9px] text-slate-400">Disetujui dosen</div>
+                </div>
+                <div class="bg-white p-3 rounded-xl border border-slate-200/80">
+                  <span class="text-[10px] text-slate-500">Alpa</span>
+                  <div class="text-xl font-black text-slate-900 mt-1">1</div>
+                  <div class="text-[9px] text-slate-400">Pada sesi selesai</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Jadwal Hari Ini Cards -->
+            <div class="space-y-2">
+              <div class="flex justify-between items-center">
+                <h4 class="font-bold text-xs text-slate-800">Jadwal hari ini</h4>
+                <span class="text-[10px] text-slate-400">3 kelas • WIB</span>
+              </div>
+
+              <div class="p-3 bg-white rounded-xl border border-emerald-200">
+                <div class="flex justify-between items-center mb-1">
+                  <span class="text-xs font-bold text-slate-800">09.00–10.40 WIB</span>
+                  <span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-100 text-emerald-700">Aktif</span>
+                </div>
+                <div class="font-black text-slate-900 text-xs">Basis Data</div>
+                <div class="text-[10px] text-slate-500">TI-3A • B.204 • Dr. Budi Santoso</div>
+              </div>
+
+              <div class="p-3 bg-white rounded-xl border border-slate-200">
+                <div class="flex justify-between items-center mb-1">
+                  <span class="text-xs font-bold text-slate-800">13.00–14.40 WIB</span>
+                  <span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-indigo-50 text-brand-700">Terjadwal</span>
+                </div>
+                <div class="font-black text-slate-900 text-xs">Pemrograman Web</div>
+                <div class="text-[10px] text-slate-500">TI-3A • Lab. 2 • Dr. Budi Santoso</div>
+              </div>
+
+              <div class="p-3 bg-white rounded-xl border border-slate-200">
+                <div class="flex justify-between items-center mb-1">
+                  <span class="text-xs font-bold text-slate-800">15.00–16.40 WIB</span>
+                  <span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-indigo-50 text-brand-700">Terjadwal</span>
+                </div>
+                <div class="font-black text-slate-900 text-xs">Statistika</div>
+                <div class="text-[10px] text-slate-500">TI-3A • B.201 • Siti Rahma, M.Si.</div>
+              </div>
+            </div>
+
+            <!-- Kehadiran Terakhir -->
+            <div class="bg-white p-3.5 rounded-xl border border-slate-200/80">
+              <div class="flex justify-between items-center mb-1">
+                <span class="text-[11px] font-bold text-slate-700">Kehadiran terakhir</span>
+                <span class="px-2 py-0.5 text-[9px] font-bold bg-emerald-100 text-emerald-700 rounded-full">Hadir</span>
+              </div>
+              <div class="font-bold text-xs text-slate-900">Basis Data • Pertemuan 8</div>
+              <div class="text-[10px] text-slate-400 mt-0.5">5 November 2026 • Tercatat 09.04.12 WIB</div>
+              <button onclick="switchMobileTab('riwayat')" class="mt-2 text-[11px] font-bold text-brand-600 flex items-center justify-between w-full pt-1 border-t border-slate-100">
+                <span>Lihat riwayat kehadiran</span>
+                <i data-lucide="arrow-right" class="w-3 h-3"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- MOBILE VIEW 2: HALAMAN ABSENSI (PDF Hal 18) -->
+          <div id="mobile-view-absensi" class="mobile-subview hidden space-y-4">
+            <div>
+              <span class="text-[10px] font-bold text-brand-600 uppercase tracking-wider">KEHADIRAN HARI INI</span>
+              <h2 class="text-xl font-extrabold text-slate-900">Halaman Absensi</h2>
+              <p class="text-xs text-slate-500">Jumat, 6 November 2026 • 09.20 WIB</p>
+            </div>
+
+            <!-- Nadia ID Card -->
+            <div class="bg-white p-3 rounded-xl border border-slate-200 flex items-center gap-2.5">
+              <div class="w-8 h-8 rounded-full bg-brand-100 text-brand-700 font-bold flex items-center justify-center text-[10px]">
+                NP
+              </div>
+              <div>
+                <div class="text-xs font-bold text-slate-900">Nadia Putri</div>
+                <div class="text-[10px] text-slate-500">202431001 • TI-3A</div>
+              </div>
+            </div>
+
+            <!-- Active Card with submission -->
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 space-y-3">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-slate-800">Sesi aktif</span>
+                <span class="text-[10px] text-slate-400">1 sesi tersedia</span>
+              </div>
+
+              <div class="flex justify-between items-center">
+                <span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-100 text-emerald-700">Aktif</span>
+                <span class="text-[10px] font-mono text-slate-400">IF201 • Pertemuan 9</span>
+              </div>
+
+              <div>
+                <h3 class="font-extrabold text-lg text-slate-900 leading-tight">Basis Data</h3>
+                <p class="text-xs text-slate-600 mt-0.5">Dr. Budi Santoso</p>
+                <p class="text-[11px] text-slate-400">TI-3A • Ruang B.204</p>
+              </div>
+
+              <div class="p-2.5 bg-slate-50 rounded-xl border border-slate-100">
+                <div class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                  <i data-lucide="clock" class="w-3.5 h-3.5 text-brand-600"></i> 09.00–10.40 WIB
+                </div>
+                <div class="text-[10px] text-slate-500 mt-0.5">Tersisa 1 jam 20 menit untuk mengisi kehadiran.</div>
+              </div>
+
+              <p class="text-[10px] text-slate-500">Topik: Normalisasi dan perancangan basis data</p>
+
+              <!-- Attendance state toggle for mobile -->
+              <div class="pt-2 border-t border-slate-100 space-y-2.5">
+                <div class="flex justify-between items-center text-xs">
+                  <span class="text-slate-500">Kehadiran Anda</span>
+                  <span id="mobile-status-badge" class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                    Belum mengisi
+                  </span>
+                </div>
+
+                <button id="mobile-btn-submit" onclick="submitAttendance()" class="w-full py-3 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold shadow-md shadow-brand-200 flex items-center justify-center gap-2">
+                  <i data-lucide="send" class="w-3.5 h-3.5"></i> Kirim kehadiran sekarang
+                </button>
+                <p id="mobile-btn-note" class="text-[9px] text-slate-400 text-center">Satu kali kirim untuk tercatat Hadir.</p>
+              </div>
+            </div>
+
+            <!-- Sesi Berikutnya -->
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 space-y-2">
+              <span class="text-xs font-bold text-slate-800">Sesi berikutnya</span>
+              <div class="flex justify-between items-center">
+                <span class="text-xs font-bold text-slate-800">13.00–14.40 WIB</span>
+                <span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-indigo-50 text-brand-700">Terjadwal</span>
+              </div>
+              <div class="font-bold text-xs text-slate-900">Pemrograman Web</div>
+              <div class="text-[10px] text-slate-500">Dr. Budi Santoso • Lab. 2</div>
+              <div class="p-2 bg-slate-50 rounded-lg text-[10px] text-slate-400 flex items-center justify-center gap-1">
+                <i data-lucide="lock" class="w-3 h-3"></i> Belum dibuka
+              </div>
+            </div>
+
+            <!-- Help box -->
+            <div class="p-3 bg-indigo-50/70 border border-indigo-100 rounded-xl flex items-start gap-2">
+              <i data-lucide="info" class="w-4 h-4 text-brand-600 shrink-0 mt-0.5"></i>
+              <div class="text-[10px] text-slate-600 leading-relaxed">
+                <span class="font-bold text-brand-700">Perlu bantuan?</span> Hubungi dosen jika berhalangan hadir. Belum mengisi tidak dianggap Alpa selama sesi masih aktif.
+              </div>
+            </div>
+          </div>
+
+          <!-- MOBILE VIEW 3: RIWAYAT -->
+          <div id="mobile-view-riwayat" class="mobile-subview hidden space-y-4">
+            <div>
+              <span class="text-[10px] font-bold text-brand-600 uppercase tracking-wider">CATATAN PRIBADI</span>
+              <h2 class="text-xl font-extrabold text-slate-900">Riwayat Kehadiran</h2>
+              <p class="text-xs text-slate-500">Semester Ganjil 2026/2027</p>
+            </div>
+
+            <div class="space-y-2">
+              <div class="p-3 bg-white rounded-xl border border-slate-200 flex justify-between items-center">
+                <div>
+                  <div class="text-xs font-bold text-slate-900">Basis Data (Pertemuan 8)</div>
+                  <div class="text-[10px] text-slate-400">5 Nov 2026 • 09.04.12 WIB</div>
+                </div>
+                <span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-100 text-emerald-700">Hadir</span>
+              </div>
+
+              <div class="p-3 bg-white rounded-xl border border-slate-200 flex justify-between items-center">
+                <div>
+                  <div class="text-xs font-bold text-slate-900">Pemrograman Web (Pertemuan 7)</div>
+                  <div class="text-[10px] text-slate-400">4 Nov 2026 • 13.02.45 WIB</div>
+                </div>
+                <span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-100 text-emerald-700">Hadir</span>
+              </div>
+
+              <div class="p-3 bg-white rounded-xl border border-slate-200 flex justify-between items-center">
+                <div>
+                  <div class="text-xs font-bold text-slate-900">Statistika (Pertemuan 8)</div>
+                  <div class="text-[10px] text-slate-400">3 Nov 2026 • 15.01.20 WIB</div>
+                </div>
+                <span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-100 text-emerald-700">Hadir</span>
+              </div>
+
+              <div class="p-3 bg-white rounded-xl border border-slate-200 flex justify-between items-center">
+                <div>
+                  <div class="text-xs font-bold text-slate-900">Basis Data (Pertemuan 7)</div>
+                  <div class="text-[10px] text-slate-400">30 Okt 2026</div>
+                </div>
+                <span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-100 text-amber-700">Izin</span>
+              </div>
+
+              <div class="p-3 bg-white rounded-xl border border-slate-200 flex justify-between items-center">
+                <div>
+                  <div class="text-xs font-bold text-slate-900">Pemrograman Web (Pertemuan 6)</div>
+                  <div class="text-[10px] text-slate-400">29 Okt 2026</div>
+                </div>
+                <span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-rose-100 text-rose-700">Alpa</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Phone Bottom Navigation Bar (PDF Hal 17 & 18 bottom) -->
+        <div class="bg-white border-t border-slate-100 px-6 py-2.5 flex items-center justify-between shrink-0 select-none">
+          <button onclick="switchMobileTab('dashboard')" id="mobile-tab-btn-dashboard" class="flex flex-col items-center gap-1 text-brand-600">
+            <i data-lucide="layout-grid" class="w-5 h-5"></i>
+            <span class="text-[10px] font-bold">Dashboard</span>
+          </button>
+          <button onclick="switchMobileTab('absensi')" id="mobile-tab-btn-absensi" class="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-600">
+            <i data-lucide="scan-line" class="w-5 h-5"></i>
+            <span class="text-[10px] font-semibold">Absensi</span>
+          </button>
+          <button onclick="switchMobileTab('riwayat')" id="mobile-tab-btn-riwayat" class="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-600">
+            <i data-lucide="history" class="w-5 h-5"></i>
+            <span class="text-[10px] font-semibold">Riwayat</span>
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT LOGIC FOR SWITCHING SCREENS, ROLES & LIVE INTERACTION -->
+  <script>
+    // Current Application State
+    let currentRole = 'admin';
+    let currentPage = 'admin-dashboard';
+    let attendanceSubmitted = false;
+    let viewMode = 'desktop';
+
+    const roleProfiles = {
+      admin: {
+        name: 'Rina Puspita',
+        role: 'Administrator',
+        avatar: 'RP',
+        sidebarTitle: 'RUANG ADMIN',
+        defaultPage: 'admin-dashboard'
+      },
+      dosen: {
+        name: 'Dr. Budi Santoso',
+        role: 'Dosen / Guru',
+        avatar: 'BS',
+        sidebarTitle: 'RUANG DOSEN / GURU',
+        defaultPage: 'dosen-dashboard'
+      },
+      mahasiswa: {
+        name: 'Nadia Putri',
+        role: 'Mahasiswa / Siswa',
+        avatar: 'NP',
+        sidebarTitle: 'RUANG MAHASISWA / SISWA',
+        defaultPage: 'mhs-dashboard'
+      }
+    };
+
+    function switchRole(role) {
+      currentRole = role;
+      
+      // Update Top Switcher Buttons
+      ['admin', 'dosen', 'mahasiswa'].forEach(r => {
+        const btn = document.getElementById(`role-btn-${r}`);
+        if (r === role) {
+          btn.className = 'px-3 py-1 rounded-md text-xs font-semibold transition-all bg-brand-600 text-white shadow';
+        } else {
+          btn.className = 'px-3 py-1 rounded-md text-xs font-semibold transition-all text-slate-300 hover:text-white';
+        }
+      });
+
+      // Update Navigations
+      document.getElementById('nav-admin').classList.toggle('hidden', role !== 'admin');
+      document.getElementById('nav-dosen').classList.toggle('hidden', role !== 'dosen');
+      document.getElementById('nav-mahasiswa').classList.toggle('hidden', role !== 'mahasiswa');
+
+      // Update User profile in header
+      const profile = roleProfiles[role];
+      document.getElementById('sidebar-role-label').textContent = profile.sidebarTitle;
+      document.getElementById('user-name').textContent = profile.name;
+      document.getElementById('user-role-label').textContent = profile.role;
+      document.getElementById('user-avatar').textContent = profile.avatar;
+      document.getElementById('breadcrumb-role').textContent = role === 'admin' ? 'Admin' : (role === 'dosen' ? 'Dosen / Guru' : 'Mahasiswa / Siswa');
+
+      // Navigate to default page for role
+      navigateTo(profile.defaultPage);
+    }
+
+    function navigateTo(pageId) {
+      currentPage = pageId;
+
+      // Hide all pages
+      document.querySelectorAll('.page-view').forEach(p => p.classList.add('hidden'));
+
+      // Show target page
+      const targetElem = document.getElementById(`page-${pageId}`);
+      if (targetElem) {
+        targetElem.classList.remove('hidden');
+      }
+
+      // Update sidebar nav active state
+      document.querySelectorAll('.nav-item').forEach(btn => {
+        if (btn.getAttribute('data-target') === pageId) {
+          btn.className = 'nav-item w-full flex items-center gap-3 px-3 py-2.5 text-sm font-semibold rounded-xl text-brand-700 bg-brand-50 transition';
+        } else {
+          btn.className = 'nav-item w-full flex items-center gap-3 px-3 py-2.5 text-sm font-semibold rounded-xl text-slate-600 hover:bg-slate-100 transition';
+        }
+      });
+
+      // Update breadcrumb
+      const pageNames = {
+        'admin-dashboard': 'Dashboard',
+        'admin-users': 'Manajemen Pengguna',
+        'admin-classes': 'Kelas & Mata Pelajaran',
+        'admin-schedules': 'Pengaturan Jadwal',
+        'dosen-dashboard': 'Dashboard',
+        'dosen-create-session': 'Buat Sesi Absensi',
+        'dosen-monitoring': 'Pemantauan Kehadiran & Rekap',
+        'mhs-dashboard': 'Dashboard',
+        'mhs-attendance': 'Halaman Absensi',
+        'mhs-history': 'Riwayat Kehadiran'
+      };
+      document.getElementById('breadcrumb-page').textContent = pageNames[pageId] || 'Dashboard';
+      
+      lucide.createIcons();
+    }
+
+    function setViewMode(mode) {
+      viewMode = mode;
+      const desktopContainer = document.getElementById('desktop-container');
+      const mobileContainer = document.getElementById('mobile-frame-container');
+      const btnDesktop = document.getElementById('view-btn-desktop');
+      const btnMobile = document.getElementById('view-btn-mobile');
+
+      if (mode === 'mobile') {
+        desktopContainer.classList.add('hidden');
+        mobileContainer.classList.remove('hidden');
+        btnMobile.className = 'px-2.5 py-1 rounded-md text-xs font-medium bg-slate-700 text-white flex items-center gap-1';
+        btnDesktop.className = 'px-2.5 py-1 rounded-md text-xs font-medium text-slate-300 hover:text-white flex items-center gap-1';
+        switchRole('mahasiswa');
+      } else {
+        mobileContainer.classList.add('hidden');
+        desktopContainer.classList.remove('hidden');
+        btnDesktop.className = 'px-2.5 py-1 rounded-md text-xs font-medium bg-slate-700 text-white flex items-center gap-1';
+        btnMobile.className = 'px-2.5 py-1 rounded-md text-xs font-medium text-slate-300 hover:text-white flex items-center gap-1';
+      }
+      lucide.createIcons();
+    }
+
+    function switchMobileTab(tab) {
+      document.querySelectorAll('.mobile-subview').forEach(v => v.classList.add('hidden'));
+      document.getElementById(`mobile-view-${tab}`).classList.remove('hidden');
+
+      // Update icons
+      ['dashboard', 'absensi', 'riwayat'].forEach(t => {
+        const btn = document.getElementById(`mobile-tab-btn-${t}`);
+        if (t === tab) {
+          btn.className = 'flex flex-col items-center gap-1 text-brand-600 font-bold';
+        } else {
+          btn.className = 'flex flex-col items-center gap-1 text-slate-400 hover:text-slate-600 font-semibold';
+        }
+      });
+      lucide.createIcons();
+    }
+
+    // Interactive Attendance Submission Simulator (matches PDF Hal 14 -> Hal 15)
+    function submitAttendance() {
+      if (attendanceSubmitted) return;
+      attendanceSubmitted = true;
+
+      // Update Desktop View for Mahasiswa
+      document.getElementById('state-not-submitted').classList.add('hidden');
+      document.getElementById('state-submitted').classList.remove('hidden');
+      document.getElementById('attendance-success-banner').classList.remove('hidden');
+      document.getElementById('clock-display').textContent = '09.21 WIB';
+      
+      // Update Mahasiswa Stats
+      document.getElementById('mhs-stat-hadir').textContent = '30';
+      document.getElementById('mhs-stat-percent').textContent = '93,7%';
+      document.getElementById('mhs-banner-status-text').innerHTML = '<span class="text-emerald-700 font-semibold">✓ Anda sudah tercatat Hadir pada 09.21.14 WIB.</span>';
+
+      // Update Dosen Monitoring View
+      const dosenNadiaStatus = document.getElementById('dosen-nadia-status');
+      if (dosenNadiaStatus) {
+        dosenNadiaStatus.className = 'inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200';
+        dosenNadiaStatus.innerHTML = '<i data-lucide="check" class="w-3 h-3"></i> Hadir';
+      }
+      const dosenNadiaTime = document.getElementById('dosen-nadia-time');
+      if (dosenNadiaTime) {
+        dosenNadiaTime.textContent = '09.21.14 WIB';
+        dosenNadiaTime.className = 'py-3 px-4 text-slate-700 font-medium';
+      }
+
+      // Update Mobile View
+      const mobileStatus = document.getElementById('mobile-status-badge');
+      if (mobileStatus) {
+        mobileStatus.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 border border-emerald-200';
+        mobileStatus.textContent = 'Hadir (09.21.14 WIB)';
+      }
+      const mobileBtn = document.getElementById('mobile-btn-submit');
+      if (mobileBtn) {
+        mobileBtn.disabled = true;
+        mobileBtn.className = 'w-full py-3 bg-slate-100 text-slate-400 border border-slate-200 rounded-xl text-xs font-bold cursor-not-allowed flex items-center justify-center gap-2';
+        mobileBtn.innerHTML = '<i data-lucide="check" class="w-4 h-4 text-emerald-600"></i> Kehadiran sudah dikirim';
+      }
+      const mobileNote = document.getElementById('mobile-btn-note');
+      if (mobileNote) {
+        mobileNote.textContent = 'Kehadiran tidak dapat dikirim ulang.';
+      }
+
+      lucide.createIcons();
+    }
+
+    // Update Session Create Preview dynamically
+    function updateSessionPreview() {
+      const cls = document.getElementById('input-session-class').value;
+      const subj = document.getElementById('input-session-subject').value;
+      const meet = document.getElementById('input-session-meet').value;
+
+      document.getElementById('preview-class-label').textContent = `${cls} • 32 mahasiswa`;
+      const isWeb = subj.includes('Web');
+      document.getElementById('preview-subject-title').textContent = isWeb ? 'Pemrograman Web' : 'Basis Data';
+      document.getElementById('preview-subject-code').textContent = `${isWeb ? 'IF203' : 'IF201'} • ${meet}`;
+    }
+
+    // Initialize icons on first load
+    document.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+    });
+  </script>
+</body>
+</html>
+
